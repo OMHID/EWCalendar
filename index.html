@@ -76,7 +76,7 @@
 </div>
 
 <script>
-  const supabase = supabase.createClient(
+  const client = supabase.createClient(
     'https://gxornxzzkmrkrenaszoq.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
   );
@@ -99,7 +99,7 @@
   let teams = {};
 
   async function loadData() {
-    const { data: techData, error: techError } = await supabase.from('technicians').select('*').eq('active', true).order('name');
+    const { data: techData, error: techError } = await client.from('technicians').select('*').eq('active', true).order('name');
     const { data: activityData, error: activityError } = await supabase.from('activities').select('*');
     const { data: teamData, error: teamError } = await supabase.from('teams').select('*');
 
