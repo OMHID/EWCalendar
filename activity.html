@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Activity</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 50px;
+    }
+    form {
+      max-width: 400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    label {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+    select, input[type="date"], input[type="text"], textarea, button {
+      width: 100%;
+      padding: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+      font-family: Arial, sans-serif;
+    }
+    input::placeholder, textarea::placeholder {
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      color: #888;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    textarea {
+      resize: vertical;
+    }
+    .saving-message {
+      text-align: center;
+      margin-top: 10px;
+      font-size: 14px;
+      color: green;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Create Activity</h2>
+
+<form id="activityForm">
+  <!-- Tech Name -->
+  <div>
+    <label for="tech">Tech Name</label><br>
+    <select id="tech" name="tech" required>
+      <option value="">Select Name</option>
+      <option>Alan Hamilton</option>
+      <option>Brent Harris</option>
+      <option>Christian Tuters</option>
+      <option>Conrad O'Brien</option>
+      <option>Danny Hollett</option>
+      <option>David Manzanares</option>
+      <option>Derik Archibald</option>
+      <option>Evan Davies</option>
+      <option>Fiona Goursaud</option>
+      <option>Flavio Rocha</option>
+      <option>Guillermo Munoz</option>
+      <option>Jamake Elkins</option>
+      <option>James Lamkin</option>
+      <option>Jared Otto</option>
+      <option>Matthew Gough</option>
+      <option>Matthew Schmitt</option>
+      <option>Michael Nuttall</option>
+      <option>Nathan Vanderberg</option>
+      <option>Nathaniel Kerscher</option>
+      <option>Ricardo Avena</option>
+      <option>Robert Butler</option>
+      <option>Robert Garbart</option>
+      <option>Ross Lapides</option>
+      <option>Viacheslav Semenov</option>
+      <option>Weston Marcinowski</option>
+    </select>
+  </div>
+
+  <!-- Start Date -->
+  <div>
+    <label for="start">Start Date</label><br>
+    <input type="date" id="start" name="start" required>
+  </div>
+
+  <!-- End Date -->
+  <div>
+    <label for="end">End Date</label><br>
+    <input type="date" id="end" name="end" required>
+  </div>
+
+  <!-- Status -->
+  <div>
+    <label for="status">Status</label><br>
+    <select id="status" name="status" required>
+      <option value="">Select Status</option>
+      <option>Home Site Work</option>
+      <option>Training</option>
+      <option>Work Rotation (15x15)</option>
+      <option>Field Break (15x15)</option>
+      <option>Standard Work (M–F)</option>
+      <option>PTO</option>
+      <option>LOA</option>
+      <option>Standby</option>
+      <option>Medical</option>
+    </select>
+  </div>
+
+  <!-- Type -->
+  <div>
+    <label for="type">Type</label><br>
+    <select id="type" name="type" required>
+      <option value="">Select Type</option>
+      <option>Onshore</option>
+      <option>Offshore</option>
+      <option>Office</option>
+      <option>Remote</option>
+      <option>N/A</option>
+    </select>
+  </div>
+
+  <!-- Location -->
+  <div>
+    <label for="location">Location</label><br>
+    <select id="location" name="location" required>
+      <option value="">Select Location</option>
+      <option>U.S. Outer Continental Shelf</option>
+      <option>South Brooklyn Marine Terminal</option>
+      <option>Home Site</option>
+      <option>Portland</option>
+      <option>Denmark</option>
+      <option>Germany</option>
+      <option>Poland</option>
+      <option>Taiwan</option>
+      <option>Other</option>
+    </select>
+  </div>
+
+  <!-- Project Name -->
+  <div>
+    <label for="projectName">Project Name</label><br>
+    <input type="text" id="projectName" name="projectName" maxlength="80" placeholder="Project Name (Max 80 characters)">
+  </div>
+
+  <!-- Notes -->
+  <div>
+    <label for="notes">Notes</label><br>
+    <textarea id="notes" name="notes" rows="4" maxlength="250" placeholder="Notes (Max 250 characters)"></textarea>
+  </div>
+
+  <button type="submit">Save Activity</button>
+</form>
+
+<!-- Saving message -->
+<div class="saving-message" id="savingMessage">Saving activity...</div>
+
+<script>
+  const form = document.getElementById('activityForm');
+  const savingMessage = document.getElementById('savingMessage');
+
+  form.addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent form from actually submitting
+
+    const activity = {
+      tech: document.getElementById('tech').value,
+      start: document.getElementById('start').value,
+      end: document.getElementById('end').value,
+      status: document.getElementById('status').value,
+      type: document.getElementById('type').value,
+      location: document.getElementById('location').value,
+      projectName: document.getElementById('projectName').value,
+      notes: document.getElementById('notes').value
+    };
+
+    // Load existing activities
+    let activities = JSON.parse(localStorage.getItem('activities')) || [];
+
+    // Add new activity
+    activities.push(activity);
+
+    // Save back to localStorage
+    localStorage.setItem('activities', JSON.stringify(activities));
+
+    // Show saving message
+    savingMessage.style.display = 'block';
+
+    // Redirect after short delay
+    setTimeout(() => {
+      window.location.href = 'index.html';
+    }, 1000);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Teams</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    .teams-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+    .team-column {
+      border: 1px solid #ccc;
+      width: 200px;
+      min-height: 400px;
+      padding: 10px;
+      overflow-y: auto;
+    }
+    .team-column h3 {
+      margin-top: 0;
+    }
+    .tech-name {
+      padding: 5px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .tech-name.selected {
+      background-color: #ddd;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .controls button {
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .save-button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<h2>Manage Teams</h2>
+<div class="teams-container">
+  <div class="team-column" id="redTeam">
+    <h3>Red Team</h3>
+  </div>
+
+  <div class="controls">
+    <button onclick="moveToTeam('toRed')">To Red</button>
+    <button onclick="moveToTeam('fromRed')">To No Team</button>
+  </div>
+
+  <div class="team-column" id="noTeam">
+    <h3>No Team</h3>
+  </div>
+
+  <div class="controls">
+    <button onclick="moveToTeam('toBlue')">To Blue</button>
+    <button onclick="moveToTeam('fromBlue')">To No Team</button>
+  </div>
+
+  <div class="team-column" id="blueTeam">
+    <h3>Blue Team</h3>
+  </div>
+</div>
+
+<button class="save-button" onclick="saveAndReturn()">Save Changes</button>
+
+<script>
+let selectedTech = null;
+let selectedDiv = null;
+
+const redTeam = document.getElementById('redTeam');
+const noTeam = document.getElementById('noTeam');
+const blueTeam = document.getElementById('blueTeam');
+
+const techs = JSON.parse(localStorage.getItem('techs') || '[]');
+const teams = JSON.parse(localStorage.getItem('teams') || '{}');
+
+function createTechDiv(name) {
+  const div = document.createElement('div');
+  div.className = 'tech-name';
+  div.textContent = name;
+  div.onclick = () => {
+    document.querySelectorAll('.tech-name').forEach(el => el.classList.remove('selected'));
+    div.classList.add('selected');
+    selectedTech = name;
+    selectedDiv = div;
+  };
+  return div;
+}
+
+function populateTeams() {
+  const red = [], blue = [], none = [];
+  techs.forEach(t => {
+    const name = typeof t === 'string' ? t : t.name;
+    const assigned = teams[name];
+    if (assigned === 'Red') red.push(name);
+    else if (assigned === 'Blue') blue.push(name);
+    else none.push(name);
+  });
+  [red, blue, none].forEach(arr => arr.sort());
+  redTeam.innerHTML = '<h3>Red Team</h3>';
+  blueTeam.innerHTML = '<h3>Blue Team</h3>';
+  noTeam.innerHTML = '<h3>No Team</h3>';
+  red.forEach(n => redTeam.appendChild(createTechDiv(n)));
+  blue.forEach(n => blueTeam.appendChild(createTechDiv(n)));
+  none.forEach(n => noTeam.appendChild(createTechDiv(n)));
+}
+
+function moveToTeam(action) {
+  if (!selectedTech || !selectedDiv) return;
+  const origin = selectedDiv.parentElement.id;
+  if (action === 'toRed' && origin === 'noTeam') {
+    teams[selectedTech] = 'Red';
+  } else if (action === 'toBlue' && origin === 'noTeam') {
+    teams[selectedTech] = 'Blue';
+  } else if (action === 'fromRed' && origin === 'redTeam') {
+    delete teams[selectedTech];
+  } else if (action === 'fromBlue' && origin === 'blueTeam') {
+    delete teams[selectedTech];
+  } else {
+    return;
+  }
+  selectedTech = null;
+  selectedDiv = null;
+  populateTeams();
+}
+
+function saveAndReturn() {
+  localStorage.setItem('teams', JSON.stringify(teams));
+  window.location.href = 'index.html';
+}
+
+populateTeams();
+</script>
+</body>
+</html>
