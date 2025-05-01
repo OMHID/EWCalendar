@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Empire Wind Team Schedule</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -225,6 +226,11 @@
 </div>
 
 <script>
+  const supabase = supabase.createClient(
+  'https://gxornxzzkmrkrenaszoq.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
+);
+
 function parseLocalDate(str) {
   const [year, month, day] = str.split('-').map(Number);
   return new Date(year, month - 1, day); // month is 0-indexed
