@@ -44,25 +44,43 @@
     textarea {
       resize: vertical;
     }
-    .saving-message {
-      text-align: center;
-      margin-top: 10px;
-      font-size: 14px;
-      color: green;
-      display: none;
-    }
   </style>
 </head>
 <body>
 
 <h2>Create Activity</h2>
 
-<form id="activityForm">
+<form>
   <!-- Tech Name -->
   <div>
     <label for="tech">Tech Name</label><br>
     <select id="tech" name="tech" required>
-      <option value="">Loading...</option>
+      <option value="">Select Name</option>
+      <option>Alan Hamilton</option>
+      <option>Brent Harris</option>
+      <option>Christian Tuters</option>
+      <option>Conrad O'Brien</option>
+      <option>Danny Hollett</option>
+      <option>David Manzanares</option>
+      <option>Derik Archibald</option>
+      <option>Evan Davies</option>
+      <option>Fiona Goursaud</option>
+      <option>Flavio Rocha</option>
+      <option>Guillermo Munoz</option>
+      <option>Jamake Elkins</option>
+      <option>James Lamkin</option>
+      <option>Jared Otto</option>
+      <option>Matthew Gough</option>
+      <option>Matthew Schmitt</option>
+      <option>Michael Nuttall</option>
+      <option>Nathan Vanderberg</option>
+      <option>Nathaniel Kerscher</option>
+      <option>Ricardo Avena</option>
+      <option>Robert Butler</option>
+      <option>Robert Garbart</option>
+      <option>Ross Lapides</option>
+      <option>Viacheslav Semenov</option>
+      <option>Weston Marcinowski</option>
     </select>
   </div>
 
@@ -83,15 +101,17 @@
     <label for="status">Status</label><br>
     <select id="status" name="status" required>
       <option value="">Select Status</option>
-      <option>Home Site Work</option>
+      <option>Current Site Work</option>
       <option>Training</option>
       <option>Work Rotation (15x15)</option>
-      <option>Field Break (15x15)</option>
       <option>Standard Work (M–F)</option>
       <option>PTO</option>
       <option>LOA</option>
+      <option>Holiday</option>
+      <option>Travel Days</option>
+      <option>Onboarding</option>
       <option>Standby</option>
-      <option>Medical</option>
+      <option>Unavailable</option>
     </select>
   </div>
 
@@ -121,6 +141,7 @@
       <option>Germany</option>
       <option>Poland</option>
       <option>Taiwan</option>
+      <option>Empire Wind Offshore Site</option>
       <option>Other</option>
     </select>
   </div>
@@ -139,74 +160,28 @@
 
   <button type="submit">Save Activity</button>
 </form>
-
-<!-- Saving message -->
-<div class="saving-message" id="savingMessage">Saving activity...</div>
-
 <script>
-  const supabase = supabase.createClient(
-  'https://gxornxzzkmrkrenaszoq.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
-);
-
-async function loadTechnicians() {
-  const { data, error } = await supabase
-    .from('technicians')
-    .select('name')
-    .eq('active', true)
-    .order('name');
-
-  if (error) {
-    alert('Failed to load technicians');
-    console.error(error);
-    return;
-  }
-
-  const select = document.getElementById('tech');
-  select.innerHTML = '<option value="">Select Name</option>';
-
-  data.forEach(({ name }) => {
-    const option = document.createElement('option');
-    option.value = name;
-    option.textContent = name;
-    select.appendChild(option);
+  document.querySelector('form').addEventListener('submit', function (event) {
+    event.preventDefault(); // Prevent page reload
+  
+    const activity = {
+      tech: document.getElementById('tech').value,
+      start: document.getElementById('start').value,
+      end: document.getElementById('end').value,
+      status: document.getElementById('status').value,
+      type: document.getElementById('type').value,
+      location: document.getElementById('location').value,
+      projectName: document.getElementById('projectName').value,
+      notes: document.getElementById('notes').value
+    };
+  
+    const activities = JSON.parse(localStorage.getItem('activities') || '[]');
+    activities.push(activity);
+    localStorage.setItem('activities', JSON.stringify(activities));
+  
+    // Redirect to index.html
+    window.location.href = 'index.html';
   });
-}
-
-loadTechnicians();
-
-  const form = document.getElementById('activityForm');
-  const savingMessage = document.getElementById('savingMessage');
-
-  form.addEventListener('submit', async function (event) {
-  event.preventDefault();
-
-  const activity = {
-    tech: document.getElementById('tech').value,
-    start_date: document.getElementById('start').value,
-    end_date: document.getElementById('end').value,
-    status: document.getElementById('status').value,
-    type: document.getElementById('type').value,
-    location: document.getElementById('location').value,
-    project_name: document.getElementById('projectName').value,
-    notes: document.getElementById('notes').value
-  };
-
-  savingMessage.style.display = 'block';
-
-  const { error } = await supabase.from('activities').insert([activity]);
-
-  if (error) {
-    alert('Failed to save activity');
-    console.error(error);
-    savingMessage.style.display = 'none';
-    return;
-  }
-
-  window.location.href = 'index.html';
-});
-
-</script>
-
+  </script>
 </body>
 </html>
