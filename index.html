@@ -100,8 +100,8 @@
 
   async function loadData() {
     const { data: techData, error: techError } = await client.from('technicians').select('*').eq('active', true).order('name');
-    const { data: activityData, error: activityError } = await supabase.from('activities').select('*');
-    const { data: teamData, error: teamError } = await supabase.from('teams').select('*');
+    const { data: activityData, error: activityError } = await client.from('activities').select('*');
+    const { data: teamData, error: teamError } = await client.from('teams').select('*');
 
     if (techError || activityError || teamError) {
       alert("Error loading data.");
