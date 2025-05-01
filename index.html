@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Empire Wind Team Schedule</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -23,7 +22,8 @@
       min-width: 100%;
       margin: 0 auto;
     }
-    .calendar-grid th, .calendar-grid td {
+    .calendar-grid th,
+    .calendar-grid td {
       border: 1px solid #ddd;
       padding: 1px;
       text-align: center;
@@ -44,14 +44,21 @@
       font-size: 12px !important;
       white-space: nowrap;
     }
-    .calendar-grid th.day, .calendar-grid td.day {
+    .calendar-grid th.day,
+    .calendar-grid td.day {
       width: 22px;
       min-width: 22px;
       max-width: 22px;
     }
-    .weekend { background-color: #f0f0f0 !important; }
-    .month-blue { background-color: #e6f2ff !important; }
-    .month-green { background-color: #e6ffe6 !important; }
+    .weekend {
+      background-color: #f0f0f0 !important;
+    }
+    .month-blue {
+      background-color: #e6f2ff !important;
+    }
+    .month-green {
+      background-color: #e6ffe6 !important;
+    }
     .spacer-row td {
       height: 5px;
       background: #fff;
@@ -59,158 +66,428 @@
       padding: 0;
       margin: 0;
     }
-    .month-header { font-size: 14px !important; padding: 10px 0; height: 20px; vertical-align: middle; }
-    .red-team { color: red; }
-    .blue-team { color: darkblue; }
-    .no-team { color: black; }
+    .month-header {
+      font-size: 14px !important;
+      padding: 10px 0;
+      height: 20px;
+      vertical-align: middle;
+    }
+    #context-menu {
+      position: absolute;
+      display: none;
+      background: white;
+      border: 1px solid #ccc;
+      box-shadow: 0px 0px 5px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    #context-menu div {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    #context-menu div:hover {
+      background-color: #eee;
+    }
+    #manageModal {
+      display: none;
+      position: fixed;
+      z-index: 2000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 20px;
+      width: 360px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+    .modal-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      padding: 5px;
+      font-size: 14px;
+      text-align: left;
+    }
+    .modal-list div {
+      cursor: pointer;
+      padding: 4px;
+    }
+    .modal-list div:hover {
+      background-color: #eee;
+    }
+    .modal-footer {
+      text-align: right;
+    }
+    .modal-footer button {
+      margin-left: 10px;
+      padding: 6px 12px;
+    }
+    .red-team {
+  color: red;
+}
+.blue-team {
+  color: darkblue;
+}
+.no-team {
+  color: black;
+}
+
   </style>
 </head>
 <body>
 
 <h2>Empire Wind Team Schedule</h2>
+
 <div class="calendar-container">
-  <table class="calendar-grid">
+  <table class="calendar-grid" id="calendar">
     <thead id="calendar-head"></thead>
     <tbody id="calendar-body"></tbody>
   </table>
 </div>
 
+<div id="context-menu">
+  <div id="delete-activity">Delete Activity</div>
+  <div id="delete-tech">Delete Technician</div>
+</div>
+
+<div style="margin-top: 20px;">
+  <button onclick="window.location.href='activity.html'" style="
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;">Create Activity</button>
+
+  <button onclick="openManageModal()" style="
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: green;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;">Manage Resources</button>
+
+  <button onclick="window.location.href='teams.html'" style="
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: purple;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;">Manage Teams</button>
+
+    <button onclick="openCalendarModal()" style="
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: orange;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;">Manage Calendar</button>
+
+</div>
+
+<!-- Modal for Managing Techs -->
+<div id="manageModal">
+  <div class="modal-content">
+    <h3>Manage Technicians</h3>
+    <div class="modal-list" id="techList"></div>
+    <input type="text" id="newTechInput" placeholder="Add new name or click on name to change to inactivate" style="width: 100%;" />
+    <div class="modal-footer">
+      <button onclick="closeManageModal()">Cancel</button>
+      <button onclick="saveManageModal()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for Managing Calendar -->
+<div id="calendarModal" style="display:none; position:fixed; z-index:2000; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4);">
+  <div style="background:#fff; width:300px; margin:10% auto; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.3);">
+    <h3>Manage Calendar</h3>
+    <label>Start Date:</label><br>
+    <input type="date" id="calendarStart" style="width:100%; margin-bottom:10px;"><br>
+    <label>End Date:</label><br>
+    <input type="date" id="calendarEnd" style="width:100%; margin-bottom:20px;"><br>
+    <div style="text-align:right;">
+      <button onclick="closeCalendarModal()">Cancel</button>
+      <button onclick="saveCalendarDates()">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  const client = supabase.createClient(
-    'https://gxornxzzkmrkrenaszoq.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
-  );
+function parseLocalDate(str) {
+  const [year, month, day] = str.split('-').map(Number);
+  return new Date(year, month - 1, day); // month is 0-indexed
+}
 
-  const head = document.getElementById('calendar-head');
-  const body = document.getElementById('calendar-body');
-  const monthColors = ['month-blue', 'month-green'];
+const startDate = parseLocalDate(localStorage.getItem('calendarStart') || '2025-04-01');
+const rawEnd = localStorage.getItem('calendarEnd') || '2029-01-01';
+const endDate = parseLocalDate(rawEnd);
 
-  const startDate = new Date(localStorage.getItem('calendarStart') || '2025-04-01');
-  const endDate = new Date(localStorage.getItem('calendarEnd') || '2029-01-01');
-  const dates = [];
-  let d = new Date(startDate);
-  while (d <= endDate) {
-    dates.push(new Date(d));
-    d.setDate(d.getDate() + 1);
-  }
+const dates = [];
+let date = new Date(startDate);
+while (date <= endDate) {
+  dates.push(new Date(date));
+  date.setDate(date.getDate() + 1);
+}
 
-  let techs = [];
-  let activities = [];
-  let teams = {};
+let techs = JSON.parse(localStorage.getItem('techs') || '[]');
+let activities = JSON.parse(localStorage.getItem('activities') || '[]');
+let teams = JSON.parse(localStorage.getItem('teams') || '{}');
 
-  async function loadData() {
-    const { data: techData, error: techError } = await client.from('technicians').select('*').eq('active', true).order('name');
-    const { data: activityData, error: activityError } = await client.from('activities').select('*');
-    const { data: teamData, error: teamError } = await client.from('teams').select('*');
+const head = document.getElementById('calendar-head');
+const body = document.getElementById('calendar-body');
+const monthColors = ['month-blue', 'month-green'];
 
-    if (techError || activityError || teamError) {
-      alert("Error loading data.");
-      console.error({ techError, activityError, teamError });
-      return;
+// Month headers
+const monthRow = document.createElement('tr');
+const emptyMonthTh = document.createElement('th');
+emptyMonthTh.className = 'employee-name';
+monthRow.appendChild(emptyMonthTh);
+
+let lastMonth = '', monthCell = null, monthSpan = 0, monthColorIndex = 0;
+dates.forEach((date, i) => {
+  const label = `${date.toLocaleString('default', { month: 'long' })} - ${date.getFullYear()}`;
+  if (label !== lastMonth) {
+    if (monthCell) {
+      monthCell.colSpan = monthSpan;
+      monthCell.classList.add(monthColors[monthColorIndex++ % 2], 'month-header');
     }
+    monthCell = document.createElement('th');
+    monthCell.textContent = label;
+    monthRow.appendChild(monthCell);
+    monthSpan = 1;
+    lastMonth = label;
+  } else {
+    monthSpan++;
+  }
+  if (i === dates.length - 1 && monthCell) {
+    monthCell.colSpan = monthSpan;
+    monthCell.classList.add(monthColors[monthColorIndex % 2], 'month-header');
+  }
+});
+head.appendChild(monthRow);
 
-    techs = techData;
-    activities = activityData;
-    teamData.forEach(({ technician_name, team }) => {
-      teams[technician_name] = team;
+// Day and weekday headers
+['Name', ''].forEach((label, i) => {
+  const row = document.createElement('tr');
+  const th = document.createElement('th');
+  th.className = 'employee-name';
+  th.textContent = i === 0 ? 'Name' : '';
+  row.appendChild(th);
+  dates.forEach(date => {
+    const th = document.createElement('th');
+    th.className = 'day';
+    if (i === 0) th.textContent = date.getDate();
+    else if (i === 1) th.textContent = date.toLocaleDateString('en-US', { weekday: 'short' })[0];
+    if (date.getDay() === 0 || date.getDay() === 6) th.classList.add('weekend');
+    row.appendChild(th);
+  });
+  head.appendChild(row);
+});
+
+// Add a spacer row before the first tech
+const preSpacerRow = document.createElement('tr');
+preSpacerRow.className = 'spacer-row';
+const spacerNameCell = document.createElement('td');
+spacerNameCell.className = 'employee-name';
+preSpacerRow.appendChild(spacerNameCell);
+dates.forEach(() => {
+  const spacerCell = document.createElement('td');
+  preSpacerRow.appendChild(spacerCell);
+});
+body.appendChild(preSpacerRow);
+
+// Tech rows
+const techRowMap = {};
+techs
+  .filter(t => t.active)
+  .sort((a, b) => {
+    const teamOrder = { Red: 0, Blue: 1, undefined: 2 };
+    const teamA = teams[a.name] || 'undefined';
+    const teamB = teams[b.name] || 'undefined';
+    if (teamOrder[teamA] !== teamOrder[teamB]) {
+      return teamOrder[teamA] - teamOrder[teamB];
+    }
+    return a.name.localeCompare(b.name);
+  })
+  .forEach(({ name }) => {
+
+  const tr = document.createElement('tr');
+  const nameCell = document.createElement('td');
+nameCell.className = 'employee-name';
+const team = teams[name];
+if (team === 'Red') nameCell.classList.add('red-team');
+else if (team === 'Blue') nameCell.classList.add('blue-team');
+else nameCell.classList.add('no-team');
+nameCell.textContent = name;
+
+  nameCell.dataset.techName = name;
+  tr.appendChild(nameCell);
+
+  dates.forEach(date => {
+    const td = document.createElement('td');
+    td.className = 'day';
+    if (date.getDay() === 0 || date.getDay() === 6) td.classList.add('weekend');
+    td.dataset.date = date.toISOString().split('T')[0];
+    tr.appendChild(td);
+  });
+
+  body.appendChild(tr);
+
+  const spacerRow = document.createElement('tr');
+  spacerRow.className = 'spacer-row';
+  const spacerNameCell = document.createElement('td');
+  spacerNameCell.className = 'employee-name';
+  spacerRow.appendChild(spacerNameCell);
+  dates.forEach(() => {
+    const spacerCell = document.createElement('td');
+    spacerRow.appendChild(spacerCell);
+  });
+  body.appendChild(spacerRow);
+
+  techRowMap[name] = tr;
+});
+
+// Activity rendering
+activities.forEach(({ tech, start, end, status, type, location, projectName, notes }) => {
+  function parseLocalDate(str) {
+  const [year, month, day] = str.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+const s = parseLocalDate(start);
+const e = parseLocalDate(end);
+
+  if (techRowMap[tech]) {
+    const cells = techRowMap[tech].querySelectorAll('td.day');
+    dates.forEach((d, i) => {
+      if (d >= s && d <= e) {
+        const cell = cells[i];
+        cell.classList.remove('weekend');
+        cell.style.backgroundColor =
+          ["Training", "Standby"].includes(status) ? 'orange' :
+          ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
+        cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${projectName}\nNotes: ${notes}`;
+        cell.dataset.activityId = `${tech}|${start}|${end}`;
+      }
     });
+  }
+});
 
-    renderCalendar();
+// Context menu
+let clickedCell = null, clickedTech = null;
+const contextMenu = document.getElementById('context-menu');
+
+body.addEventListener('contextmenu', e => {
+  e.preventDefault();
+  contextMenu.style.display = 'none';
+  clickedCell = null;
+  clickedTech = null;
+
+  if (e.target.dataset.activityId) {
+    clickedCell = e.target;
+  } else if (e.target.classList.contains('employee-name') && e.target.dataset.techName) {
+    clickedTech = e.target.dataset.techName;
   }
 
-  function renderCalendar() {
-    // Month row
-    const monthRow = document.createElement('tr');
-    const emptyMonthTh = document.createElement('th');
-    emptyMonthTh.className = 'employee-name';
-    monthRow.appendChild(emptyMonthTh);
-    let lastMonth = '', monthCell = null, monthSpan = 0, monthColorIndex = 0;
-
-    dates.forEach((date, i) => {
-      const label = `${date.toLocaleString('default', { month: 'long' })} - ${date.getFullYear()}`;
-      if (label !== lastMonth) {
-        if (monthCell) {
-          monthCell.colSpan = monthSpan;
-          monthCell.classList.add(monthColors[monthColorIndex++ % 2], 'month-header');
-        }
-        monthCell = document.createElement('th');
-        monthCell.textContent = label;
-        monthRow.appendChild(monthCell);
-        monthSpan = 1;
-        lastMonth = label;
-      } else {
-        monthSpan++;
-      }
-      if (i === dates.length - 1 && monthCell) {
-        monthCell.colSpan = monthSpan;
-        monthCell.classList.add(monthColors[monthColorIndex % 2], 'month-header');
-      }
-    });
-    head.appendChild(monthRow);
-
-    // Date and weekday rows
-    ['Name', ''].forEach((label, i) => {
-      const row = document.createElement('tr');
-      const th = document.createElement('th');
-      th.className = 'employee-name';
-      th.textContent = i === 0 ? 'Name' : '';
-      row.appendChild(th);
-      dates.forEach(date => {
-        const th = document.createElement('th');
-        th.className = 'day';
-        if (i === 0) th.textContent = date.getDate();
-        else th.textContent = date.toLocaleDateString('en-US', { weekday: 'short' })[0];
-        if (date.getDay() === 0 || date.getDay() === 6) th.classList.add('weekend');
-        row.appendChild(th);
-      });
-      head.appendChild(row);
-    });
-
-    // Tech rows
-    const techRowMap = {};
-    techs.forEach(({ name }) => {
-      const tr = document.createElement('tr');
-      const nameCell = document.createElement('td');
-      nameCell.className = 'employee-name';
-      nameCell.textContent = name;
-      nameCell.classList.add(teams[name] === 'Red' ? 'red-team' : teams[name] === 'Blue' ? 'blue-team' : 'no-team');
-      tr.appendChild(nameCell);
-
-      dates.forEach(date => {
-        const td = document.createElement('td');
-        td.className = 'day';
-        td.dataset.date = date.toISOString().split('T')[0];
-        if (date.getDay() === 0 || date.getDay() === 6) td.classList.add('weekend');
-        tr.appendChild(td);
-      });
-
-      body.appendChild(tr);
-      techRowMap[name] = tr;
-    });
-
-    // Render activities
-    activities.forEach(({ tech, start_date, end_date, status, type, location, project_name, notes }) => {
-      const s = new Date(start_date);
-      const e = new Date(end_date);
-      if (techRowMap[tech]) {
-        const cells = techRowMap[tech].querySelectorAll('td.day');
-        dates.forEach((d, i) => {
-          if (d >= s && d <= e) {
-            const cell = cells[i];
-            cell.style.backgroundColor =
-              ["Training", "Standby"].includes(status) ? 'orange' :
-              ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
-            cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${project_name}\nNotes: ${notes}`;
-          }
-        });
-      }
-    });
+  if (clickedCell || clickedTech) {
+    contextMenu.style.top = `${e.pageY}px`;
+    contextMenu.style.left = `${e.pageX}px`;
+    contextMenu.style.display = 'block';
   }
+});
 
-  window.onload = () => {
-    loadData();
-  };
+document.addEventListener('click', () => contextMenu.style.display = 'none');
 
+document.getElementById('delete-activity').onclick = () => {
+  if (clickedCell && confirm("Delete this activity?")) {
+    activities = activities.filter(a => `${a.tech}|${a.start}|${a.end}` !== clickedCell.dataset.activityId);
+    localStorage.setItem('activities', JSON.stringify(activities));
+    location.reload();
+  }
+};
+document.getElementById('delete-tech').onclick = () => {
+  if (clickedTech && confirm(`Delete "${clickedTech}" and all their activities?`)) {
+    techs = techs.filter(t => t.name !== clickedTech);
+    activities = activities.filter(a => a.tech !== clickedTech);
+    localStorage.setItem('techs', JSON.stringify(techs));
+    localStorage.setItem('activities', JSON.stringify(activities));
+    location.reload();
+  }
+};
+
+// Modal control
+function openManageModal() {
+  const list = document.getElementById('techList');
+  list.innerHTML = '';
+  const sorted = techs.slice().sort((a, b) => a.name.localeCompare(b.name));
+  sorted.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.textContent = `${i + 1}. ${t.name} [${t.active ? 'Active' : 'Inactive'}]`;
+    div.onclick = () => {
+      t.active = !t.active;
+      div.textContent = `${i + 1}. ${t.name} [${t.active ? 'Active' : 'Inactive'}]`;
+    };
+    list.appendChild(div);
+  });
+  document.getElementById('newTechInput').value = '';
+  document.getElementById('manageModal').style.display = 'block';
+}
+function closeManageModal() {
+  document.getElementById('manageModal').style.display = 'none';
+}
+function saveManageModal() {
+  const input = document.getElementById('newTechInput').value.trim();
+  if (input) techs.push({ name: input, active: true });
+  localStorage.setItem('techs', JSON.stringify(techs));
+  closeManageModal();
+  location.reload();
+}
+
+// Calendar Modal Functions
+function openCalendarModal() {
+  const currentStart = localStorage.getItem('calendarStart');
+  const currentEnd = localStorage.getItem('calendarEnd');
+  document.getElementById('calendarStart').value = currentStart ? currentStart : '2025-04-01';
+  document.getElementById('calendarEnd').value = currentEnd ? currentEnd : '2029-01-01';
+  document.getElementById('calendarModal').style.display = 'block';
+}
+
+function closeCalendarModal() {
+  document.getElementById('calendarModal').style.display = 'none';
+}
+
+function saveCalendarDates() {
+  const start = document.getElementById('calendarStart').value;
+  const end = document.getElementById('calendarEnd').value;
+  if (new Date(start) >= new Date(end)) {
+    alert("Start date must be before end date.");
+    return;
+  }
+  localStorage.setItem('calendarStart', start);
+  localStorage.setItem('calendarEnd', end);
+  location.reload();
+}
+
+// Scroll on load
+window.onload = () => {
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const iso = twoWeeksAgo.toISOString().split('T')[0];
+  const target = document.querySelector(`td[data-date="${iso}"]`);
+  if (target) document.querySelector('.calendar-container').scrollLeft = target.offsetLeft - 160;
+};
 </script>
+
 </body>
 </html>
