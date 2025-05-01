@@ -178,37 +178,34 @@ loadTechnicians();
   const form = document.getElementById('activityForm');
   const savingMessage = document.getElementById('savingMessage');
 
-  form.addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent form from actually submitting
+  form.addEventListener('submit', async function (event) {
+  event.preventDefault();
 
-    const activity = {
-      tech: document.getElementById('tech').value,
-      start: document.getElementById('start').value,
-      end: document.getElementById('end').value,
-      status: document.getElementById('status').value,
-      type: document.getElementById('type').value,
-      location: document.getElementById('location').value,
-      projectName: document.getElementById('projectName').value,
-      notes: document.getElementById('notes').value
-    };
+  const activity = {
+    tech: document.getElementById('tech').value,
+    start_date: document.getElementById('start').value,
+    end_date: document.getElementById('end').value,
+    status: document.getElementById('status').value,
+    type: document.getElementById('type').value,
+    location: document.getElementById('location').value,
+    project_name: document.getElementById('projectName').value,
+    notes: document.getElementById('notes').value
+  };
 
-    // Load existing activities
-    let activities = JSON.parse(localStorage.getItem('activities')) || [];
+  savingMessage.style.display = 'block';
 
-    // Add new activity
-    activities.push(activity);
+  const { error } = await supabase.from('activities').insert([activity]);
 
-    // Save back to localStorage
-    localStorage.setItem('activities', JSON.stringify(activities));
+  if (error) {
+    alert('Failed to save activity');
+    console.error(error);
+    savingMessage.style.display = 'none';
+    return;
+  }
 
-    // Show saving message
-    savingMessage.style.display = 'block';
+  window.location.href = 'index.html';
+});
 
-    // Redirect after short delay
-    setTimeout(() => {
-      window.location.href = 'index.html';
-    }, 1000);
-  });
 </script>
 
 </body>
