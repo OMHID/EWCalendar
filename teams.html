@@ -88,10 +88,10 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-  const client = supabase.createClient(
-    'https://gxornxzzkmrkrenaszoq.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
-  );
+const client = supabase.createClient(
+  'https://gxornxzzkmrkrenaszoq.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
+);
 
 let selectedTech = null;
 let selectedDiv = null;
@@ -114,6 +114,7 @@ function createTechDiv(name) {
   };
   return div;
 }
+
 async function loadTechs() {
   const { data, error } = await client
     .from('techs')
@@ -128,19 +129,22 @@ async function loadTechs() {
 
   return data;
 }
+
 function populateTeams() {
   const red = [], blue = [], none = [];
   techs.forEach(t => {
     const name = t.name;
-    const assigned = t.team;
-    if (assigned === 'Red') red.push(name);
-    else if (assigned === 'Blue') blue.push(name);
+    if (t.team === 'Red') red.push(name);
+    else if (t.team === 'Blue') blue.push(name);
     else none.push(name);
   });
+
   [red, blue, none].forEach(arr => arr.sort());
+
   redTeam.innerHTML = '<h3>Red Team</h3>';
   blueTeam.innerHTML = '<h3>Blue Team</h3>';
   noTeam.innerHTML = '<h3>No Team</h3>';
+
   red.forEach(n => redTeam.appendChild(createTechDiv(n)));
   blue.forEach(n => blueTeam.appendChild(createTechDiv(n)));
   none.forEach(n => noTeam.appendChild(createTechDiv(n)));
@@ -174,22 +178,6 @@ async function saveAndReturn() {
   const updates = techs.map(t =>
     client.from('techs').update({ team: t.team }).eq('id', t.id)
   );
-
-  try {
-    await Promise.all(updates);
-    window.location.href = 'index.html';
-  } catch (error) {
-    alert('Failed to save team changes.');
-    console.error(error);
-  }
-}
-
-  // Also clear team assignment for techs that had a team before but were moved to "No Team"
-  techs.forEach(t => {
-    if (!teams[t.name] && t.team) {
-      updates.push(client.from('techs').update({ team: null }).eq('id', t.id));
-    }
-  });
 
   try {
     await Promise.all(updates);
