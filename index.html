@@ -257,7 +257,21 @@ async function loadTechsFromSupabase(includeInactive = false) {
   }
   return data;
 }
-let activities = JSON.parse(localStorage.getItem('activities') || '[]');
+let activities = [];
+
+async function loadActivitiesFromSupabase() {
+  const { data, error } = await client
+    .from('activities')
+    .select('*')
+    .order('start_date');
+
+  if (error) {
+    console.error('Error loading activities from Supabase:', error);
+    return [];
+  }
+
+  return data;
+}
 
 const head = document.getElementById('calendar-head');
 const body = document.getElementById('calendar-body');
@@ -265,6 +279,7 @@ const body = document.getElementById('calendar-body');
 
 (async () => {
   techs = await loadTechsFromSupabase();
+  activities = await loadActivitiesFromSupabase();
   renderTechs();
 })();
 
