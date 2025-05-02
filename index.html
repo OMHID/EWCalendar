@@ -349,8 +349,9 @@ body.appendChild(preSpacerRow);
   return a.name.localeCompare(b.name);
 }
 
+const techRowMap = {};
+
 function renderTechs() {
-  const techRowMap = {};
   const red = [], blue = [], none = [];
 
   techs.filter(t => t.active).forEach(t => {
@@ -398,32 +399,28 @@ function renderTechs() {
 
     techRowMap[name] = tr;
   });
-}
 
-// Activity rendering
-activities.forEach(({ tech, start, end, status, type, location, projectName, notes }) => {
-  function parseLocalDate(str) {
-  const [year, month, day] = str.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-const s = parseLocalDate(start);
-const e = parseLocalDate(end);
+  // ⬇️ Moved inside renderTechs
+  activities.forEach(({ tech, start, end, status, type, location, projectName, notes }) => {
+    const s = parseLocalDate(start);
+    const e = parseLocalDate(end);
 
-  if (techRowMap[tech]) {
-    const cells = techRowMap[tech].querySelectorAll('td.day');
-    dates.forEach((d, i) => {
-      if (d >= s && d <= e) {
-        const cell = cells[i];
-        cell.classList.remove('weekend');
-        cell.style.backgroundColor =
-          ["Training", "Standby"].includes(status) ? 'orange' :
-          ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
-        cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${projectName}\nNotes: ${notes}`;
-        cell.dataset.activityId = `${tech}|${start}|${end}`;
-      }
-    });
-  }
-});
+    if (techRowMap[tech]) {
+      const cells = techRowMap[tech].querySelectorAll('td.day');
+      dates.forEach((d, i) => {
+        if (d >= s && d <= e) {
+          const cell = cells[i];
+          cell.classList.remove('weekend');
+          cell.style.backgroundColor =
+            ["Training", "Standby"].includes(status) ? 'orange' :
+            ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
+          cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${projectName}\nNotes: ${notes}`;
+          cell.dataset.activityId = `${tech}|${start}|${end}`;
+        }
+      });
+    }
+  });
+}
 
 // Context menu
 let clickedCell = null, clickedTech = null;
