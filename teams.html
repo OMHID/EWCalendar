@@ -152,14 +152,21 @@ function moveToTeam(action) {
 
   const origin = selectedDiv.parentElement.id;
 
+  const tech = techs.find(t => t.name === selectedTech);
+  if (!tech) return;
+
   if (action === 'toRed') {
     teams[selectedTech] = 'Red';
+    tech.team = 'Red';
   } else if (action === 'toBlue') {
     teams[selectedTech] = 'Blue';
+    tech.team = 'Blue';
   } else if (action === 'fromRed' && origin === 'redTeam') {
     delete teams[selectedTech];
+    tech.team = null;
   } else if (action === 'fromBlue' && origin === 'blueTeam') {
     delete teams[selectedTech];
+    tech.team = null;
   } else {
     return;
   }
