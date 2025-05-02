@@ -438,11 +438,17 @@ document.getElementById('delete-activity').onclick = () => {
 };
 document.getElementById('delete-tech').onclick = () => {
   if (clickedTech && confirm(`Delete "${clickedTech}" and all their activities?`)) {
-    techs = techs.filter(t => t.name !== clickedTech);
-    activities = activities.filter(a => a.tech !== clickedTech);
-    localStorage.setItem('techs', JSON.stringify(techs));
-    localStorage.setItem('activities', JSON.stringify(activities));
-    location.reload();
+    (async () => {
+      const { error } = await client.from('techs').delete().eq('name', clickedTech);
+      if (error) {
+        alert('Error deleting from Supabase');
+        console.error(error);
+        return;
+      }
+      activities = activities.filter(a => a.tech !== clickedTech);
+      localStorage.setItem('activities', JSON.stringify(activities));
+      location.reload();
+    })();
   }
 };
 
