@@ -252,7 +252,8 @@ async function loadTechsFromSupabase(includeInactive = false) {
   if (!includeInactive) query.eq('active', true);
   const { data, error } = await query;
   if (error) {
-    console.error('Error loading techs from Supabase:', error);
+    alert('Failed to load technician data.');
+    console.error(error);
     return [];
   }
   return data;
@@ -266,7 +267,8 @@ async function loadActivitiesFromSupabase() {
     .order('start_date');
 
   if (error) {
-    console.error('Error loading activities from Supabase:', error);
+    alert('Failed to load activities from the database.');
+    console.error(error);
     return;
   }
 
@@ -454,7 +456,6 @@ document.addEventListener('click', () => contextMenu.style.display = 'none');
 document.getElementById('delete-activity').onclick = () => {
   if (clickedCell && confirm("Delete this activity?")) {
     activities = activities.filter(a => `${a.tech}|${a.start_date}|${a.end_date}` !== clickedCell.dataset.activityId);
-    localStorage.setItem('activities', JSON.stringify(activities));
     location.reload();
   }
 };
@@ -538,7 +539,8 @@ function saveManageModal() {
       if (id) {
         const { error } = await client.from('techs').update({ active: newActive }).eq('id', id);
         if (error) {
-          console.error(`Failed to update ${name}:`, error);
+          alert(`Failed to update "${name}": ${error.message}`);
+          console.error(error);
         }
       }
     }
