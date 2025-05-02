@@ -281,8 +281,8 @@ const body = document.getElementById('calendar-body');
 
 (async () => {
   techs = await loadTechsFromSupabase();
-  await loadActivitiesFromSupabase();  // 👈 add this line
-  renderTechs();
+  await loadActivitiesFromSupabase();
+  renderTechs(activities); // ✅ pass activities
 })();
 
 const monthColors = ['month-blue', 'month-green'];
@@ -352,7 +352,7 @@ body.appendChild(preSpacerRow);
 }
 
 const techRowMap = {};
-function renderTechs() {
+function renderTechs(activities) {
   body.innerHTML = '';
   const red = [], blue = [], none = [];
 
@@ -402,12 +402,7 @@ function renderTechs() {
     techRowMap[name] = tr;
   });
 
-  // Activity rendering
   activities.forEach(({ tech, start_date, end_date, status, type, location, projectName, notes }) => {
-    function parseLocalDate(str) {
-      const [year, month, day] = str.split('-').map(Number);
-      return new Date(year, month - 1, day);
-    }
     const s = parseLocalDate(start_date);
     const e = parseLocalDate(end_date);
 
@@ -461,7 +456,7 @@ document.getElementById('delete-activity').onclick = () => {
 };
 document.getElementById('delete-tech').onclick = () => {
   if (clickedTech && confirm(`Delete "${clickedTech}" and all their activities?`)) {
-    (async () => {
+    
       const techElement = document.querySelector(`[data-tech-name="${clickedTech}"]`);
       const techId = techElement?.dataset?.techId;
       if (!techId) {
