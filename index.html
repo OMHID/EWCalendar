@@ -294,8 +294,6 @@ async function init() {
   renderTechs();
 }
 
-init();
-
 const monthColors = ['month-blue', 'month-green'];
 
 // Month headers
@@ -608,15 +606,17 @@ function saveCalendarDates() {
 
 // Scroll on load
 window.onload = () => {
-  setTimeout(() => {
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-    const iso = twoWeeksAgo.toISOString().split('T')[0];
-    const target = document.querySelector(`td[data-date="${iso}"]`);
-    if (target) {
-      document.querySelector('.calendar-container').scrollLeft = target.offsetLeft - 160;
-    }
-  }, 300); // Slight delay to ensure DOM is rendered
+  init().then(() => {
+    setTimeout(() => {
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      const iso = twoWeeksAgo.toISOString().split('T')[0];
+      const target = document.querySelector(`td[data-date="${iso}"]`);
+      if (target) {
+        document.querySelector('.calendar-container').scrollLeft = target.offsetLeft - 160;
+      }
+    }, 300);
+  });
 };
 </script>
 
