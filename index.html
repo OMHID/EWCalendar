@@ -247,12 +247,26 @@ while (date <= endDate) {
   date.setDate(date.getDate() + 1);
 }
 
-let techs = JSON.parse(localStorage.getItem('techs') || '[]');
+async function loadTechsFromSupabase() {
+  const { data, error } = await client.from('techs').select('*').eq('active', true).order('name');
+  if (error) {
+    console.error('Error loading techs from Supabase:', error);
+    return [];
+  }
+  return data;
+}
 let activities = JSON.parse(localStorage.getItem('activities') || '[]');
 let teams = JSON.parse(localStorage.getItem('teams') || '{}');
 
 const head = document.getElementById('calendar-head');
 const body = document.getElementById('calendar-body');
+  let techs = [];
+
+(async () => {
+  techs = await loadTechsFromSupabase();
+  renderTechs();
+})();
+
 const monthColors = ['month-blue', 'month-green'];
 
 // Month headers
@@ -315,55 +329,55 @@ dates.forEach(() => {
 body.appendChild(preSpacerRow);
 
 // Tech rows
-const techRowMap = {};
-techs
-  .filter(t => t.active)
-  .sort((a, b) => {
-    const teamOrder = { Red: 0, Blue: 1, undefined: 2 };
-    const teamA = teams[a.name] || 'undefined';
-    const teamB = teams[b.name] || 'undefined';
-    if (teamOrder[teamA] !== teamOrder[teamB]) {
-      return teamOrder[teamA] - teamOrder[teamB];
-    }
-    return a.name.localeCompare(b.name);
-  })
-  .forEach(({ name }) => {
+function renderTechs() {
+  const techRowMap = {};
+  techs
+    .filter(t => t.active)
+    .sort((a, b) => {
+      const teamOrder = { Red: 0, Blue: 1, undefined: 2 };
+      const teamA = teams[a.name] || 'undefined';
+      const teamB = teams[b.name] || 'undefined';
+      if (teamOrder[teamA] !== teamOrder[teamB]) {
+        return teamOrder[teamA] - teamOrder[teamB];
+      }
+      return a.name.localeCompare(b.name);
+    })
+    .forEach(({ name }) => {
+      const tr = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      nameCell.className = 'employee-name';
+      const team = teams[name];
+      if (team === 'Red') nameCell.classList.add('red-team');
+      else if (team === 'Blue') nameCell.classList.add('blue-team');
+      else nameCell.classList.add('no-team');
+      nameCell.textContent = name;
+      nameCell.dataset.techName = name;
+      tr.appendChild(nameCell);
 
-  const tr = document.createElement('tr');
-  const nameCell = document.createElement('td');
-nameCell.className = 'employee-name';
-const team = teams[name];
-if (team === 'Red') nameCell.classList.add('red-team');
-else if (team === 'Blue') nameCell.classList.add('blue-team');
-else nameCell.classList.add('no-team');
-nameCell.textContent = name;
+      dates.forEach(date => {
+        const td = document.createElement('td');
+        td.className = 'day';
+        if (date.getDay() === 0 || date.getDay() === 6) td.classList.add('weekend');
+        td.dataset.date = date.toISOString().split('T')[0];
+        tr.appendChild(td);
+      });
 
-  nameCell.dataset.techName = name;
-  tr.appendChild(nameCell);
+      body.appendChild(tr);
 
-  dates.forEach(date => {
-    const td = document.createElement('td');
-    td.className = 'day';
-    if (date.getDay() === 0 || date.getDay() === 6) td.classList.add('weekend');
-    td.dataset.date = date.toISOString().split('T')[0];
-    tr.appendChild(td);
-  });
+      const spacerRow = document.createElement('tr');
+      spacerRow.className = 'spacer-row';
+      const spacerNameCell = document.createElement('td');
+      spacerNameCell.className = 'employee-name';
+      spacerRow.appendChild(spacerNameCell);
+      dates.forEach(() => {
+        const spacerCell = document.createElement('td');
+        spacerRow.appendChild(spacerCell);
+      });
+      body.appendChild(spacerRow);
 
-  body.appendChild(tr);
-
-  const spacerRow = document.createElement('tr');
-  spacerRow.className = 'spacer-row';
-  const spacerNameCell = document.createElement('td');
-  spacerNameCell.className = 'employee-name';
-  spacerRow.appendChild(spacerNameCell);
-  dates.forEach(() => {
-    const spacerCell = document.createElement('td');
-    spacerRow.appendChild(spacerCell);
-  });
-  body.appendChild(spacerRow);
-
-  techRowMap[name] = tr;
-});
+      techRowMap[name] = tr;
+    });
+}
 
 // Activity rendering
 activities.forEach(({ tech, start, end, status, type, location, projectName, notes }) => {
