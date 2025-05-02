@@ -447,13 +447,28 @@ body.addEventListener('contextmenu', e => {
 
 document.addEventListener('click', () => contextMenu.style.display = 'none');
 
-document.getElementById('delete-activity').onclick = () => {
+document.getElementById('delete-activity').onclick = async () => {
   if (clickedCell && confirm("Delete this activity?")) {
-    activities = activities.filter(a => `${a.tech}|${a.start}|${a.end}` !== clickedCell.dataset.activityId);
-    localStorage.setItem('activities', JSON.stringify(activities));
+    const [tech, start_date, end_date] = clickedCell.dataset.activityId.split('|');
+
+    const { error } = await client
+      .from('activities')
+      .delete()
+      .match({ tech, start_date, end_date });
+
+    if (error) {
+      alert('Failed to delete activity from Supabase.');
+      console.error(error);
+      return;
+    }
+
+    activities = activities.filter(a => 
+      !(a.tech === tech && a.start_date === start_date && a.end_date === end_date)
+    );
     location.reload();
   }
 };
+
 document.getElementById('delete-tech').onclick = () => {
   if (clickedTech && confirm(`Delete "${clickedTech}" and all their activities?`)) {
     (async () => {
