@@ -149,10 +149,12 @@ function populateTeams() {
 
 function moveToTeam(action) {
   if (!selectedTech || !selectedDiv) return;
+
   const origin = selectedDiv.parentElement.id;
-  if (action === 'toRed' && origin === 'noTeam') {
+
+  if (action === 'toRed') {
     teams[selectedTech] = 'Red';
-  } else if (action === 'toBlue' && origin === 'noTeam') {
+  } else if (action === 'toBlue') {
     teams[selectedTech] = 'Blue';
   } else if (action === 'fromRed' && origin === 'redTeam') {
     delete teams[selectedTech];
@@ -161,8 +163,10 @@ function moveToTeam(action) {
   } else {
     return;
   }
+
   selectedTech = null;
   selectedDiv = null;
+  populateTeams();
 }
 
 async function saveAndReturn() {
