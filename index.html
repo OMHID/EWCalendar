@@ -426,7 +426,9 @@ function renderTechs() {
           cell.classList.remove('weekend');
           cell.style.backgroundColor =
             ["Training", "Standby"].includes(status) ? 'orange' :
-            ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
+            ["Holiday"].includes(status) ? 'blue' :
+            ["Regular Days Off (S-S)", "Field Break (15x15)", "PTO", "LOA", "Other"].includes(status) ? 'red' :
+            ["Standard Work (M–F)", "Work Rotation (15x15)"].includes(status) ? '#4CAF50' :
           cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${project_name}\nNotes: ${notes}`;
           cell.dataset.activityId = `${tech}|${start_date}|${end_date}`;
         }
