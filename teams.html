@@ -132,8 +132,8 @@ async function loadTechs() {
 function populateTeams() {
   const red = [], blue = [], none = [];
   techs.forEach(t => {
-    const name = typeof t === 'string' ? t : t.name;
-    const assigned = teams[name];
+    const name = t.name;
+    const assigned = t.team;
     if (assigned === 'Red') red.push(name);
     else if (assigned === 'Blue') blue.push(name);
     else none.push(name);
