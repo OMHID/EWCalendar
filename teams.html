@@ -115,25 +115,25 @@
   }
 
   function populateTeams() {
-    const red = [], blue = [], none = [];
+  const red = [], blue = [], none = [];
 
-    techs.forEach(t => {
-      const name = t.name;
-      if (t.team === 'Red') red.push(name);
-      else if (t.team === 'Blue') blue.push(name);
-      else none.push(name);
-    });
+  techs.forEach(t => {
+    const name = t.name;
+    if (t.team === 'Red') red.push(name);
+    else if (t.team === 'Blue') blue.push(name);
+    else none.push(name); // this covers null, undefined, or blank
+  });
 
-    [red, blue, none].forEach(arr => arr.sort());
+  [red, blue, none].forEach(arr => arr.sort());
 
-    redTeam.innerHTML = '<h3>Red Team</h3>';
-    blueTeam.innerHTML = '<h3>Blue Team</h3>';
-    noTeam.innerHTML = '<h3>No Team</h3>';
+  redTeam.innerHTML = '<h3>Red Team</h3>';
+  blueTeam.innerHTML = '<h3>Blue Team</h3>';
+  noTeam.innerHTML = '<h3>No Team</h3>';
 
-    red.forEach(n => redTeam.appendChild(createTechDiv(n)));
-    blue.forEach(n => blueTeam.appendChild(createTechDiv(n)));
-    none.forEach(n => noTeam.appendChild(createTechDiv(n)));
-  }
+  red.forEach(n => redTeam.appendChild(createTechDiv(n)));
+  blue.forEach(n => blueTeam.appendChild(createTechDiv(n)));
+  none.forEach(n => noTeam.appendChild(createTechDiv(n)));
+}
 
   function moveToTeam(action) {
     if (!selectedTech || !selectedDiv) return;
