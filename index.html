@@ -342,7 +342,7 @@ function renderTechs() {
       }
       return a.name.localeCompare(b.name);
     })
-    .forEach(({ name }) => {
+    .forEach(({ id, name }) => {
       const tr = document.createElement('tr');
       const nameCell = document.createElement('td');
       nameCell.className = 'employee-name';
