@@ -352,6 +352,7 @@ function renderTechs() {
       else nameCell.classList.add('no-team');
       nameCell.textContent = name;
       nameCell.dataset.techName = name;
+      nameCell.dataset.techId = id;
       tr.appendChild(nameCell);
 
       dates.forEach(date => {
@@ -438,13 +439,21 @@ document.getElementById('delete-activity').onclick = () => {
 };
 document.getElementById('delete-tech').onclick = () => {
   if (clickedTech && confirm(`Delete "${clickedTech}" and all their activities?`)) {
+    const techCell = document.querySelector(`[data-tech-name="${clickedTech}"]`);
+    const techId = techCell?.dataset.techId;
+    if (!techId) {
+      alert('Technician ID not found.');
+      return;
+    }
+
     (async () => {
-      const { error } = await client.from('techs').delete().eq('name', clickedTech);
+      const { error } = await client.from('techs').delete().eq('id', techId);
       if (error) {
         alert('Error deleting from Supabase');
         console.error(error);
         return;
       }
+
       activities = activities.filter(a => a.tech !== clickedTech);
       localStorage.setItem('activities', JSON.stringify(activities));
       location.reload();
