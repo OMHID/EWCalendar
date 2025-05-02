@@ -294,6 +294,8 @@ async function init() {
   renderTechs();
 }
 
+init();
+
 const monthColors = ['month-blue', 'month-green'];
 
 // Month headers
@@ -422,30 +424,12 @@ function renderTechs() {
         if (d >= s && d <= e) {
           const cell = cells[i];
           cell.classList.remove('weekend');
-          let color;
-switch (status) {
-  case "Standard Work (M–F)":
-  case "Work Rotation (15x15)":
-    color = "#4CAF50"; // green
-    break;
-  case "Training":
-  case "Standby":
-    color = "orange";
-    break;
-  case "Holiday":
-    color = "blue";
-    break;
-  case "Regular Days Off (S-S)":
-  case "Field Break (15x15)":
-  case "PTO":
-  case "LOA":
-  case "Other":
-    color = "red";
-    break;
-  default:
-    color = "#4CAF50"; // fallback to green
-}
-cell.style.backgroundColor = color;
+          cell.style.backgroundColor =
+            ["Training", "Standby"].includes(status) ? 'orange' :
+            ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
+          cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${project_name}\nNotes: ${notes}`;
+          cell.dataset.activityId = `${tech}|${start_date}|${end_date}`;
+        }
       });
     }
   });
@@ -624,17 +608,15 @@ function saveCalendarDates() {
 
 // Scroll on load
 window.onload = () => {
-  init().then(() => {
-    setTimeout(() => {
-      const twoWeeksAgo = new Date();
-      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-      const iso = twoWeeksAgo.toISOString().split('T')[0];
-      const target = document.querySelector(`td[data-date="${iso}"]`);
-      if (target) {
-        document.querySelector('.calendar-container').scrollLeft = target.offsetLeft - 160;
-      }
-    }, 300);
-  });
+  setTimeout(() => {
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+    const iso = twoWeeksAgo.toISOString().split('T')[0];
+    const target = document.querySelector(`td[data-date="${iso}"]`);
+    if (target) {
+      document.querySelector('.calendar-container').scrollLeft = target.offsetLeft - 160;
+    }
+  }, 300); // Slight delay to ensure DOM is rendered
 };
 </script>
 
