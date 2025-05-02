@@ -453,20 +453,21 @@ function closeManageModal() {
   document.getElementById('manageModal').style.display = 'none';
 }
 function saveManageModal() {
-const input = document.getElementById('newTechInput').value.trim();
-if (!input) return;
+  const input = document.getElementById('newTechInput').value.trim();
+  if (!input) return;
 
-(async () => {
-  const { error } = await client.from('technicians').insert([{ name: input, active: true }]);
-  if (error) {
-    alert('Error saving to Supabase');
-    console.error(error);
-  } else {
-    closeManageModal();
-    location.reload();
-  }
-})();
+  (async () => {
+    const { data, error } = await client.from('technicians').insert([{ name: input, active: true }]);
+    console.log('Supabase insert result:', { data, error }); // Debugging line
 
+    if (error) {
+      alert('Error saving to Supabase');
+      console.error(error);
+    } else {
+      closeManageModal();
+      location.reload();
+    }
+  })();
 }
 
 // Calendar Modal Functions
