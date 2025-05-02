@@ -454,7 +454,7 @@ document.getElementById('delete-activity').onclick = () => {
     location.reload();
   }
 };
-document.getElementById('delete-tech').onclick = () => {
+document.getElementById('delete-tech').onclick = async () => {
   if (clickedTech && confirm(`Delete "${clickedTech}" and all their activities?`)) {
     
       const techElement = document.querySelector(`[data-tech-name="${clickedTech}"]`);
@@ -488,7 +488,7 @@ document.getElementById('delete-tech').onclick = () => {
       body.appendChild(spacerRow);
 
       techs = await loadTechsFromSupabase();
-      renderTechs();
+      renderTechs(activities);
     })();
   }
 };
