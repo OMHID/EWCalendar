@@ -566,17 +566,13 @@ function saveCalendarDates() {
   location.reload();
 }
 
-// Scroll on load (delayed to ensure cells exist)
+// Scroll on load
 window.onload = () => {
-  setTimeout(() => {
-    const twoWeeksAgo = new Date();
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-    const iso = twoWeeksAgo.toISOString().split('T')[0];
-    const target = document.querySelector(`td[data-date="${iso}"]`);
-    if (target) {
-      document.querySelector('.calendar-container').scrollLeft = target.offsetLeft - 160;
-    }
-  }, 200); // Delay to wait for DOM rendering
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const iso = twoWeeksAgo.toISOString().split('T')[0];
+  const target = document.querySelector(`td[data-date="${iso}"]`);
+  if (target) document.querySelector('.calendar-container').scrollLeft = target.offsetLeft - 160;
 };
 </script>
 
