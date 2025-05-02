@@ -484,9 +484,9 @@ function openManageModal() {
   sorted.forEach((t, i) => {
     const div = document.createElement('div');
     div.textContent = `${i + 1}. ${t.name} [${t.active ? 'Active' : 'Inactive'}]`;
-    div.dataset.id = t.id;           // Store ID
-    div.dataset.name = t.name;       // Store name
-    div.dataset.active = t.active;   // Store original active status
+    div.dataset.id = t.id;           // store ID
+    div.dataset.name = t.name;       // store name
+    div.dataset.active = t.active;   // original status
     div.onclick = () => {
       const isActive = div.dataset.active === 'true';
       div.dataset.active = (!isActive).toString();
@@ -505,7 +505,7 @@ function saveManageModal() {
   const techList = document.getElementById('techList').children;
 
   (async () => {
-    // Update all existing techs’ active status
+    // Update existing techs’ active status
     for (const div of techList) {
       const id = div.dataset.id;
       const name = div.dataset.name;
@@ -519,7 +519,7 @@ function saveManageModal() {
       }
     }
 
-    // If new tech name entered, add it
+    // Insert new tech if present
     if (input) {
       const { error: insertError } = await client.from('techs').insert([{ name: input, active: true }]);
       if (insertError) {
