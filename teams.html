@@ -165,9 +165,33 @@ function moveToTeam(action) {
   selectedDiv = null;
 }
 
-function saveAndReturn() {
-  localStorage.setItem('teams', JSON.stringify(teams));
-  window.location.href = 'index.html';
+async function saveAndReturn() {
+  const updates = [];
+
+  // Build an update for each tech with a known team
+  for (const name in teams) {
+    const team = teams[name];
+
+    const tech = techs.find(t => t.name === name);
+    if (tech) {
+      updates.push(client.from('techs').update({ team }).eq('id', tech.id));
+    }
+  }
+
+  // Also clear team assignment for techs that had a team before but were moved to "No Team"
+  techs.forEach(t => {
+    if (!teams[t.name] && t.team) {
+      updates.push(client.from('techs').update({ team: null }).eq('id', t.id));
+    }
+  });
+
+  try {
+    await Promise.all(updates);
+    window.location.href = 'index.html';
+  } catch (error) {
+    alert('Failed to save team changes.');
+    console.error(error);
+  }
 }
 
 (async () => {
