@@ -349,8 +349,9 @@ body.appendChild(preSpacerRow);
   return a.name.localeCompare(b.name);
 }
 
+const techRowMap = {};
 function renderTechs() {
-  const techRowMap = {};
+  body.innerHTML = '';
   const red = [], blue = [], none = [];
 
   techs.filter(t => t.active).forEach(t => {
@@ -452,7 +453,7 @@ document.addEventListener('click', () => contextMenu.style.display = 'none');
 
 document.getElementById('delete-activity').onclick = () => {
   if (clickedCell && confirm("Delete this activity?")) {
-    activities = activities.filter(a => `${a.tech}|${a.start}|${a.end}` !== clickedCell.dataset.activityId);
+    activities = activities.filter(a => `${a.tech}|${a.start_date}|${a.end_date}` !== clickedCell.dataset.activityId);
     localStorage.setItem('activities', JSON.stringify(activities));
     location.reload();
   }
