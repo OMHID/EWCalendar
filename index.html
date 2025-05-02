@@ -484,9 +484,13 @@ function openManageModal() {
   sorted.forEach((t, i) => {
     const div = document.createElement('div');
     div.textContent = `${i + 1}. ${t.name} [${t.active ? 'Active' : 'Inactive'}]`;
+    div.dataset.id = t.id;           // Store ID
+    div.dataset.name = t.name;       // Store name
+    div.dataset.active = t.active;   // Store original active status
     div.onclick = () => {
-      t.active = !t.active;
-      div.textContent = `${i + 1}. ${t.name} [${t.active ? 'Active' : 'Inactive'}]`;
+      const isActive = div.dataset.active === 'true';
+      div.dataset.active = (!isActive).toString();
+      div.textContent = `${i + 1}. ${t.name} [${!isActive ? 'Active' : 'Inactive'}]`;
     };
     list.appendChild(div);
   });
@@ -498,19 +502,34 @@ function closeManageModal() {
 }
 function saveManageModal() {
   const input = document.getElementById('newTechInput').value.trim();
-  if (!input) return;
+  const techList = document.getElementById('techList').children;
 
   (async () => {
-    const { data, error } = await client.from('techs').insert([{ name: input, active: true }]);
-    console.log('Supabase insert result:', { data, error }); // Debugging line
+    // Update all existing techs’ active status
+    for (const div of techList) {
+      const id = div.dataset.id;
+      const name = div.dataset.name;
+      const newActive = div.dataset.active === 'true';
 
-    if (error) {
-      alert('Error saving to Supabase');
-      console.error(error);
-    } else {
-      closeManageModal();
-      location.reload();
+      if (id) {
+        const { error } = await client.from('techs').update({ active: newActive }).eq('id', id);
+        if (error) {
+          console.error(`Failed to update ${name}:`, error);
+        }
+      }
     }
+
+    // If new tech name entered, add it
+    if (input) {
+      const { error: insertError } = await client.from('techs').insert([{ name: input, active: true }]);
+      if (insertError) {
+        alert('Error adding new tech');
+        console.error(insertError);
+      }
+    }
+
+    closeManageModal();
+    location.reload();
   })();
 }
 
