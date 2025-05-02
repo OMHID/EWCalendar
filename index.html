@@ -275,11 +275,22 @@ async function loadActivitiesFromSupabase() {
 
 const head = document.getElementById('calendar-head');
 const body = document.getElementById('calendar-body');
-  let techs = [];
+let techs = [];
+
+async function retryLoadActivities(retries = 3) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const data = await loadActivitiesFromSupabase();
+    if (data.length > 0) return data;
+    console.warn(`Retry ${attempt}: No activities returned from Supabase.`);
+    await new Promise(resolve => setTimeout(resolve, 300 * attempt));
+  }
+  alert("Failed to load activities after several attempts.");
+  return [];
+}
 
 async function init() {
   techs = await loadTechsFromSupabase();
-  activities = await loadActivitiesFromSupabase();
+  activities = await retryLoadActivities();
   renderTechs();
 }
 
