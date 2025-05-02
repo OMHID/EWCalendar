@@ -247,7 +247,7 @@ while (date <= endDate) {
   date.setDate(date.getDate() + 1);
 }
 
-let techs = [];
+let techs = JSON.parse(localStorage.getItem('techs') || '[]');
 let activities = JSON.parse(localStorage.getItem('activities') || '[]');
 let teams = JSON.parse(localStorage.getItem('teams') || '{}');
 
@@ -457,7 +457,7 @@ function saveManageModal() {
   if (!input) return;
 
   (async () => {
-    const { data, error } = await client.from('techs').insert([{ name: input, active: true }]);
+    const { data, error } = await client.from('technicians').insert([{ name: input, active: true }]);
     console.log('Supabase insert result:', { data, error }); // Debugging line
 
     if (error) {
