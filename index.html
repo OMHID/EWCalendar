@@ -252,28 +252,12 @@ async function loadTechsFromSupabase(includeInactive = false) {
   if (!includeInactive) query.eq('active', true);
   const { data, error } = await query;
   if (error) {
-    alert('Failed to load technician data.');
-    console.error(error);
+    console.error('Error loading techs from Supabase:', error);
     return [];
   }
   return data;
 }
-let activities = [];
-
-async function loadActivitiesFromSupabase() {
-  const { data, error } = await client
-    .from('activities')
-    .select('*')
-    .order('start_date');
-
-  if (error) {
-    alert('Failed to load activities from the database.');
-    console.error(error);
-    return;
-  }
-
-  activities = data;
-}
+let activities = JSON.parse(localStorage.getItem('activities') || '[]');
 
 const head = document.getElementById('calendar-head');
 const body = document.getElementById('calendar-body');
@@ -281,8 +265,7 @@ const body = document.getElementById('calendar-body');
 
 (async () => {
   techs = await loadTechsFromSupabase();
-  await loadActivitiesFromSupabase();
-  renderTechs(activities); // ✅ pass activities
+  renderTechs();
 })();
 
 const monthColors = ['month-blue', 'month-green'];
@@ -351,9 +334,8 @@ body.appendChild(preSpacerRow);
   return a.name.localeCompare(b.name);
 }
 
-const techRowMap = {};
-function renderTechs(activities) {
-  body.innerHTML = '';
+function renderTechs() {
+  const techRowMap = {};
   const red = [], blue = [], none = [];
 
   techs.filter(t => t.active).forEach(t => {
@@ -401,27 +383,32 @@ function renderTechs(activities) {
 
     techRowMap[name] = tr;
   });
-
-  activities.forEach(({ tech, start_date, end_date, status, type, location, projectName, notes }) => {
-    const s = parseLocalDate(start_date);
-    const e = parseLocalDate(end_date);
-
-    if (techRowMap[tech]) {
-      const cells = techRowMap[tech].querySelectorAll('td.day');
-      dates.forEach((d, i) => {
-        if (d >= s && d <= e) {
-          const cell = cells[i];
-          cell.classList.remove('weekend');
-          cell.style.backgroundColor =
-            ["Training", "Standby"].includes(status) ? 'orange' :
-            ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
-          cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${projectName}\nNotes: ${notes}`;
-          cell.dataset.activityId = `${tech}|${start_date}|${end_date}`;
-        }
-      });
-    }
-  });
 }
+
+// Activity rendering
+activities.forEach(({ tech, start, end, status, type, location, projectName, notes }) => {
+  function parseLocalDate(str) {
+  const [year, month, day] = str.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+const s = parseLocalDate(start);
+const e = parseLocalDate(end);
+
+  if (techRowMap[tech]) {
+    const cells = techRowMap[tech].querySelectorAll('td.day');
+    dates.forEach((d, i) => {
+      if (d >= s && d <= e) {
+        const cell = cells[i];
+        cell.classList.remove('weekend');
+        cell.style.backgroundColor =
+          ["Training", "Standby"].includes(status) ? 'orange' :
+          ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
+        cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${projectName}\nNotes: ${notes}`;
+        cell.dataset.activityId = `${tech}|${start}|${end}`;
+      }
+    });
+  }
+});
 
 // Context menu
 let clickedCell = null, clickedTech = null;
@@ -450,13 +437,14 @@ document.addEventListener('click', () => contextMenu.style.display = 'none');
 
 document.getElementById('delete-activity').onclick = () => {
   if (clickedCell && confirm("Delete this activity?")) {
-    activities = activities.filter(a => `${a.tech}|${a.start_date}|${a.end_date}` !== clickedCell.dataset.activityId);
+    activities = activities.filter(a => `${a.tech}|${a.start}|${a.end}` !== clickedCell.dataset.activityId);
+    localStorage.setItem('activities', JSON.stringify(activities));
     location.reload();
   }
 };
-document.getElementById('delete-tech').onclick = async () => {
+document.getElementById('delete-tech').onclick = () => {
   if (clickedTech && confirm(`Delete "${clickedTech}" and all their activities?`)) {
-    
+    (async () => {
       const techElement = document.querySelector(`[data-tech-name="${clickedTech}"]`);
       const techId = techElement?.dataset?.techId;
       if (!techId) {
@@ -488,7 +476,7 @@ document.getElementById('delete-tech').onclick = async () => {
       body.appendChild(spacerRow);
 
       techs = await loadTechsFromSupabase();
-      renderTechs(activities);
+      renderTechs();
     })();
   }
 };
@@ -534,8 +522,7 @@ function saveManageModal() {
       if (id) {
         const { error } = await client.from('techs').update({ active: newActive }).eq('id', id);
         if (error) {
-          alert(`Failed to update "${name}": ${error.message}`);
-          console.error(error);
+          console.error(`Failed to update ${name}:`, error);
         }
       }
     }
