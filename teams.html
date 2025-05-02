@@ -86,7 +86,13 @@
 
 <button class="save-button" onclick="saveAndReturn()">Save Changes</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
+  const client = supabase.createClient(
+    'https://gxornxzzkmrkrenaszoq.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
+  );
+
 let selectedTech = null;
 let selectedDiv = null;
 
@@ -94,7 +100,7 @@ const redTeam = document.getElementById('redTeam');
 const noTeam = document.getElementById('noTeam');
 const blueTeam = document.getElementById('blueTeam');
 
-const techs = JSON.parse(localStorage.getItem('techs') || '[]');
+let techs = [];
 const teams = JSON.parse(localStorage.getItem('teams') || '{}');
 
 function createTechDiv(name) {
@@ -109,7 +115,20 @@ function createTechDiv(name) {
   };
   return div;
 }
+async function loadTechs() {
+  const { data, error } = await client
+    .from('techs')
+    .select('*')
+    .eq('active', true)
+    .order('name');
 
+  if (error) {
+    console.error('Failed to load techs:', error);
+    return [];
+  }
+
+  return data;
+}
 function populateTeams() {
   const red = [], blue = [], none = [];
   techs.forEach(t => {
@@ -144,7 +163,6 @@ function moveToTeam(action) {
   }
   selectedTech = null;
   selectedDiv = null;
-  populateTeams();
 }
 
 function saveAndReturn() {
@@ -152,7 +170,10 @@ function saveAndReturn() {
   window.location.href = 'index.html';
 }
 
-populateTeams();
+(async () => {
+  techs = await loadTechs();
+  populateTeams();
+})();
 </script>
 </body>
 </html>
