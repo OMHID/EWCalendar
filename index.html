@@ -398,32 +398,32 @@ function renderTechs() {
 
     techRowMap[name] = tr;
   });
-}
 
-// Activity rendering
-activities.forEach(({ tech, start, end, status, type, location, projectName, notes }) => {
-  function parseLocalDate(str) {
-  const [year, month, day] = str.split('-').map(Number);
-  return new Date(year, month - 1, day);
-}
-const s = parseLocalDate(start);
-const e = parseLocalDate(end);
+  // Activity rendering
+  activities.forEach(({ tech, start_date, end_date, status, type, location, projectName, notes }) => {
+    function parseLocalDate(str) {
+      const [year, month, day] = str.split('-').map(Number);
+      return new Date(year, month - 1, day);
+    }
+    const s = parseLocalDate(start_date);
+    const e = parseLocalDate(end_date);
 
-  if (techRowMap[tech]) {
-    const cells = techRowMap[tech].querySelectorAll('td.day');
-    dates.forEach((d, i) => {
-      if (d >= s && d <= e) {
-        const cell = cells[i];
-        cell.classList.remove('weekend');
-        cell.style.backgroundColor =
-          ["Training", "Standby"].includes(status) ? 'orange' :
-          ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
-        cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${projectName}\nNotes: ${notes}`;
-        cell.dataset.activityId = `${tech}|${start}|${end}`;
-      }
-    });
-  }
-});
+    if (techRowMap[tech]) {
+      const cells = techRowMap[tech].querySelectorAll('td.day');
+      dates.forEach((d, i) => {
+        if (d >= s && d <= e) {
+          const cell = cells[i];
+          cell.classList.remove('weekend');
+          cell.style.backgroundColor =
+            ["Training", "Standby"].includes(status) ? 'orange' :
+            ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
+          cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${projectName}\nNotes: ${notes}`;
+          cell.dataset.activityId = `${tech}|${start_date}|${end_date}`;
+        }
+      });
+    }
+  });
+}
 
 // Context menu
 let clickedCell = null, clickedTech = null;
