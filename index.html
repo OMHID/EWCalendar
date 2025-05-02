@@ -277,11 +277,13 @@ const head = document.getElementById('calendar-head');
 const body = document.getElementById('calendar-body');
   let techs = [];
 
-(async () => {
+async function init() {
   techs = await loadTechsFromSupabase();
   activities = await loadActivitiesFromSupabase();
   renderTechs();
-})();
+}
+
+init();
 
 const monthColors = ['month-blue', 'month-green'];
 
