@@ -401,10 +401,10 @@ function renderTechs() {
   });
 
   // ⬇️ Moved inside renderTechs
-  activities.forEach(({ tech, start, end, status, type, location, projectName, notes }) => {
-    const s = parseLocalDate(start);
-    const e = parseLocalDate(end);
-
+  activities.forEach(({ tech, start_date, end_date, status, type, location, projectName, notes }) => {
+    const s = parseLocalDate(start_date);
+    const e = parseLocalDate(end_date);
+    
     if (techRowMap[tech]) {
       const cells = techRowMap[tech].querySelectorAll('td.day');
       dates.forEach((d, i) => {
@@ -415,7 +415,7 @@ function renderTechs() {
             ["Training", "Standby"].includes(status) ? 'orange' :
             ["PTO", "LOA", "Medical", "Field Break (15x15)"].includes(status) ? 'red' : '#4CAF50';
           cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${projectName}\nNotes: ${notes}`;
-          cell.dataset.activityId = `${tech}|${start}|${end}`;
+          cell.dataset.activityId = `${tech}|${start_date}|${end_date}`;
         }
       });
     }
