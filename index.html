@@ -258,7 +258,6 @@ async function loadTechsFromSupabase(includeInactive = false) {
   return data;
 }
 let activities = JSON.parse(localStorage.getItem('activities') || '[]');
-let teams = JSON.parse(localStorage.getItem('teams') || '{}');
 
 const head = document.getElementById('calendar-head');
 const body = document.getElementById('calendar-body');
@@ -331,55 +330,59 @@ dates.forEach(() => {
 body.appendChild(preSpacerRow);
 
 // Tech rows
+  function byName(a, b) {
+  return a.name.localeCompare(b.name);
+}
+
 function renderTechs() {
   const techRowMap = {};
-  techs
-    .filter(t => t.active)
-    .sort((a, b) => {
-      const teamOrder = { Red: 0, Blue: 1, undefined: 2 };
-      const teamA = teams[a.name] || 'undefined';
-      const teamB = teams[b.name] || 'undefined';
-      if (teamOrder[teamA] !== teamOrder[teamB]) {
-        return teamOrder[teamA] - teamOrder[teamB];
-      }
-      return a.name.localeCompare(b.name);
-    })
-    .forEach(({ id, name }) => {
-      const tr = document.createElement('tr');
-      const nameCell = document.createElement('td');
-      nameCell.className = 'employee-name';
-      const team = teams[name];
-      if (team === 'Red') nameCell.classList.add('red-team');
-      else if (team === 'Blue') nameCell.classList.add('blue-team');
-      else nameCell.classList.add('no-team');
-      nameCell.textContent = name;
-      nameCell.dataset.techName = name;
-      nameCell.dataset.techId = id;
-      tr.appendChild(nameCell);
+  const red = [], blue = [], none = [];
 
-      dates.forEach(date => {
-        const td = document.createElement('td');
-        td.className = 'day';
-        if (date.getDay() === 0 || date.getDay() === 6) td.classList.add('weekend');
-        td.dataset.date = date.toISOString().split('T')[0];
-        tr.appendChild(td);
-      });
+  techs.filter(t => t.active).forEach(t => {
+    if (t.team === 'Red') red.push(t);
+    else if (t.team === 'Blue') blue.push(t);
+    else none.push(t);
+  });
 
-      body.appendChild(tr);
+  const ordered = [...red.sort(byName), ...blue.sort(byName), ...none.sort(byName)];
 
-      const spacerRow = document.createElement('tr');
-      spacerRow.className = 'spacer-row';
-      const spacerNameCell = document.createElement('td');
-      spacerNameCell.className = 'employee-name';
-      spacerRow.appendChild(spacerNameCell);
-      dates.forEach(() => {
-        const spacerCell = document.createElement('td');
-        spacerRow.appendChild(spacerCell);
-      });
-      body.appendChild(spacerRow);
+  ordered.forEach(({ id, name, team }) => {
+    const tr = document.createElement('tr');
+    const nameCell = document.createElement('td');
+    nameCell.className = 'employee-name';
 
-      techRowMap[name] = tr;
+    if (team === 'Red') nameCell.classList.add('red-team');
+    else if (team === 'Blue') nameCell.classList.add('blue-team');
+    else nameCell.classList.add('no-team');
+
+    nameCell.textContent = name;
+    nameCell.dataset.techName = name;
+    nameCell.dataset.techId = id;
+    tr.appendChild(nameCell);
+
+    dates.forEach(date => {
+      const td = document.createElement('td');
+      td.className = 'day';
+      if (date.getDay() === 0 || date.getDay() === 6) td.classList.add('weekend');
+      td.dataset.date = date.toISOString().split('T')[0];
+      tr.appendChild(td);
     });
+
+    body.appendChild(tr);
+
+    const spacerRow = document.createElement('tr');
+    spacerRow.className = 'spacer-row';
+    const spacerNameCell = document.createElement('td');
+    spacerNameCell.className = 'employee-name';
+    spacerRow.appendChild(spacerNameCell);
+    dates.forEach(() => {
+      const spacerCell = document.createElement('td');
+      spacerRow.appendChild(spacerCell);
+    });
+    body.appendChild(spacerRow);
+
+    techRowMap[name] = tr;
+  });
 }
 
 // Activity rendering
