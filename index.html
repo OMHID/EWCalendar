@@ -471,7 +471,7 @@ function saveManageModal() {
   if (!input) return;
 
   (async () => {
-    const { data, error } = await client.from('technicians').insert([{ name: input, active: true }]);
+    const { data, error } = await client.from('techs').insert([{ name: input, active: true }]);
     console.log('Supabase insert result:', { data, error }); // Debugging line
 
     if (error) {
