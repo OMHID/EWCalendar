@@ -247,8 +247,10 @@ while (date <= endDate) {
   date.setDate(date.getDate() + 1);
 }
 
-async function loadTechsFromSupabase() {
-  const { data, error } = await client.from('techs').select('*').eq('active', true).order('name');
+async function loadTechsFromSupabase(includeInactive = false) {
+  const query = client.from('techs').select('*').order('name');
+  if (!includeInactive) query.eq('active', true);
+  const { data, error } = await query;
   if (error) {
     console.error('Error loading techs from Supabase:', error);
     return [];
@@ -477,16 +479,18 @@ document.getElementById('delete-tech').onclick = () => {
 };
 
 // Modal control
-function openManageModal() {
+async function openManageModal() {
   const list = document.getElementById('techList');
   list.innerHTML = '';
+  techs = await loadTechsFromSupabase(true); // fetch all techs including inactive
   const sorted = techs.slice().sort((a, b) => a.name.localeCompare(b.name));
+
   sorted.forEach((t, i) => {
     const div = document.createElement('div');
     div.textContent = `${i + 1}. ${t.name} [${t.active ? 'Active' : 'Inactive'}]`;
-    div.dataset.id = t.id;           // store ID
-    div.dataset.name = t.name;       // store name
-    div.dataset.active = t.active;   // original status
+    div.dataset.id = t.id;
+    div.dataset.name = t.name;
+    div.dataset.active = t.active;
     div.onclick = () => {
       const isActive = div.dataset.active === 'true';
       div.dataset.active = (!isActive).toString();
@@ -494,6 +498,7 @@ function openManageModal() {
     };
     list.appendChild(div);
   });
+
   document.getElementById('newTechInput').value = '';
   document.getElementById('manageModal').style.display = 'block';
 }
