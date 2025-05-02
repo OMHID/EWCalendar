@@ -247,14 +247,7 @@ while (date <= endDate) {
   date.setDate(date.getDate() + 1);
 }
 
-async function loadTechsFromSupabase() {
-  const { data, error } = await client.from('techs').select('*').eq('active', true).order('name');
-  if (error) {
-    console.error('Error loading techs from Supabase:', error);
-    return [];
-  }
-  return data;
-}
+let techs = [];
 let activities = JSON.parse(localStorage.getItem('activities') || '[]');
 let teams = JSON.parse(localStorage.getItem('teams') || '{}');
 
