@@ -439,14 +439,14 @@ document.getElementById('delete-activity').onclick = () => {
 };
 document.getElementById('delete-tech').onclick = () => {
   if (clickedTech && confirm(`Delete "${clickedTech}" and all their activities?`)) {
-    const techCell = document.querySelector(`[data-tech-name="${clickedTech}"]`);
-    const techId = techCell?.dataset.techId;
-    if (!techId) {
-      alert('Technician ID not found.');
-      return;
-    }
-
     (async () => {
+      const techElement = document.querySelector(`[data-tech-name="${clickedTech}"]`);
+      const techId = techElement?.dataset?.techId;
+      if (!techId) {
+        alert("Tech ID not found. Unable to delete.");
+        return;
+      }
+
       const { error } = await client.from('techs').delete().eq('id', techId);
       if (error) {
         alert('Error deleting from Supabase');
@@ -456,7 +456,22 @@ document.getElementById('delete-tech').onclick = () => {
 
       activities = activities.filter(a => a.tech !== clickedTech);
       localStorage.setItem('activities', JSON.stringify(activities));
-      location.reload();
+
+      // Clear and re-render tech rows
+      body.innerHTML = '';
+      const spacerRow = document.createElement('tr');
+      spacerRow.className = 'spacer-row';
+      const spacerCell = document.createElement('td');
+      spacerCell.className = 'employee-name';
+      spacerRow.appendChild(spacerCell);
+      dates.forEach(() => {
+        const td = document.createElement('td');
+        spacerRow.appendChild(td);
+      });
+      body.appendChild(spacerRow);
+
+      techs = await loadTechsFromSupabase();
+      renderTechs();
     })();
   }
 };
