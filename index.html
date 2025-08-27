@@ -424,14 +424,27 @@ function renderTechs() {
         if (d >= s && d <= e) {
           const cell = cells[i];
           cell.classList.remove('weekend');
-          const color = 
-  ["Training", "Standby", "Other"].includes(status) ? 'orange' :
-  ["Holiday"].includes(status) ? 'blue' :
-  ["Regular Days Off (S-S)", "Field Break (15x15)", "PTO", "LOA"].includes(status) ? 'red' :
-  ["Standard Work (M–F)", "Work Rotation (15x15)"].includes(status) ? '#4CAF50' :
-  'gray'; // fallback
+const color =
+  // Orange group
+  ["Training", "Standby", "Traveling", "Other"].includes(status) ? 'orange' :
+
+  // Blue group
+  ["Public Holiday"].includes(status) ? 'blue' :
+
+  // Red group (time off / rest)
+  ["Weekend Off (Sat–Sun)", "Sunday Off (Sun)", "Paid Time Off (PTO)", "Flexible Time Off (FTO)"].includes(status) ? 'red' :
+
+  // Green group (normal work / rotation)
+  ["Weekday Shift (Mon–Fri)", "Regular Shift (Mon–Sat)",
+   "Weekend On-Call (Sat–Sun)",
+   "Rotation On-Duty (14x14)", "Rotation Off-Duty (14x14)",
+   "Rotation On-Duty (21x21)", "Rotation Off-Duty (21x21)"].includes(status) ? '#4CAF50' :
+
+  // Fallback
+  'gray';
 
 cell.style.backgroundColor = color;
+cell.textContent = project_name || '';  // <<< add this
 cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${project_name}\nNotes: ${notes}`;
 cell.dataset.activityId = `${tech}|${start_date}|${end_date}`;
 
@@ -628,5 +641,6 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
