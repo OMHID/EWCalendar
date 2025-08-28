@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Empire Wind Team Schedule (Read-Only)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+    .calendar-container {
+      overflow-x: auto;
+      border: 1px solid #ccc;
+      max-height: 90vh;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .calendar-grid {
+      border-collapse: collapse;
+      width: max-content;
+      min-width: 100%;
+      margin: 0 auto;
+    }
+    .calendar-grid th,
+    .calendar-grid td {
+      border: 1px solid #ddd;
+      padding: 1px;
+      text-align: center;
+      white-space: nowrap;
+      font-size: 10px;
+      background: #fff;
+    }
+    .employee-name {
+      position: sticky;
+      left: 0;
+      background: #fff;
+      z-index: 2;
+      font-weight: bold;
+      min-width: 160px;
+      max-width: 160px;
+      text-align: left;
+      padding-left: 5px;
+      font-size: 12px !important;
+      white-space: nowrap;
+    }
+    /* Set your day column width here */
+    .calendar-grid th.day,
+    .calendar-grid td.day {
+      width: 50px;
+      min-width: 50px;
+      max-width: 50px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .weekend { background-color: #f0f0f0 !important; }
+    .month-blue { background-color: #e6f2ff !important; }
+    .month-green { background-color: #e6ffe6 !important; }
+    .spacer-row td {
+      height: 5px;
+      background: #fff;
+      border: none;
+      padding: 0;
+      margin: 0;
+    }
+    .month-header {
+      font-size: 14px !important;
+      padding: 10px 0;
+      height: 20px;
+      vertical-align: middle;
+    }
+    .red-team { color: red; }
+    .blue-team { color: darkblue; }
+    .no-team { color: black; }
+  </style>
+</head>
+<body>
+
+<h2>Empire Wind Team Schedule (Read-Only)</h2>
+
+<div class="calendar-container">
+  <table class="calendar-grid" id="calendar">
+    <thead id="calendar-head"></thead>
+    <tbody id="calendar-body"></tbody>
+  </table>
+</div>
+
+<!-- No action buttons, no modals, no context menu on this page -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script>
+  const client = supabase.createClient(
+    'https://gxornxzzkmrkrenaszoq.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
+  );
+
+  function parseLocalDate(str) {
+    const [year, month, day] = str.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  const startDate = parseLocalDate(localStorage.getItem('calendarStart') || '2025-04-01');
+  const rawEnd = localStorage.getItem('calendarEnd') || '2029-01-01';
+  const endDate = parseLocalDate(rawEnd);
+
+  const dates = [];
+  let date = new Date(startDate);
+  while (date <= endDate) {
+    dates.push(new Date(date));
+    date.setDate(date.getDate() + 1);
+  }
+
+  async function loadTechsFromSupabase() {
+    const { data, error } = await client.from('techs').select('*').eq('active', true).order('name');
+    if (error) { console.error('Error loading techs:', error); return []; }
+    return data;
+  }
+
+  async function loadActivitiesFromSupabase() {
+    const { data, error } = await client.from('activities').select('*').order('start_date');
+    if (error) { console.error('Error loading activities:', error); return []; }
+    return data;
+  }
+
+  const head = document.getElementById('calendar-head');
+  const body = document.getElementById('calendar-body');
+  let techs = [], activities = [];
+
+  async function init() {
+    techs = await loadTechsFromSupabase();
+    activities = await loadActivitiesFromSupabase();
+    render();
+  }
+  init();
+
+  const monthColors = ['month-blue', 'month-green'];
+
+  // Month header row
+  const monthRow = document.createElement('tr');
+  const emptyMonthTh = document.createElement('th');
+  emptyMonthTh.className = 'employee-name';
+  monthRow.appendChild(emptyMonthTh);
+
+  let lastMonth = '', monthCell = null, monthSpan = 0, monthColorIndex = 0;
+  dates.forEach((date, i) => {
+    const label = `${date.toLocaleString('default', { month: 'long' })} - ${date.getFullYear()}`;
+    if (label !== lastMonth) {
+      if (monthCell) {
+        monthCell.colSpan = monthSpan;
+        monthCell.classList.add(monthColors[monthColorIndex++ % 2], 'month-header');
+      }
+      monthCell = document.createElement('th');
+      monthCell.textContent = label;
+      monthRow.appendChild(monthCell);
+      monthSpan = 1;
+      lastMonth = label;
+    } else {
+      monthSpan++;
+    }
+    if (i === dates.length - 1 && monthCell) {
+      monthCell.colSpan = monthSpan;
+      monthCell.classList.add(monthColors[monthColorIndex % 2], 'month-header');
+    }
+  });
+  head.appendChild(monthRow);
+
+  // Day number + weekday initial rows
+  ['Name', ''].forEach((label, i) => {
+    const row = document.createElement('tr');
+    const th = document.createElement('th');
+    th.className = 'employee-name';
+    th.textContent = i === 0 ? 'Name' : '';
+    row.appendChild(th);
+    dates.forEach(date => {
+      const dth = document.createElement('th');
+      dth.className = 'day';
+      if (i === 0) dth.textContent = date.getDate();
+      else if (i === 1) dth.textContent = date.toLocaleDateString('en-US', { weekday: 'short' })[0];
+      if (date.getDay() === 0 || date.getDay() === 6) dth.classList.add('weekend');
+      row.appendChild(dth);
+    });
+    head.appendChild(row);
+  });
+
+  function byName(a, b) { return a.name.localeCompare(b.name); }
+
+  function render() {
+    const techRowMap = {};
+    const red = [], blue = [], none = [];
+    techs.forEach(t => {
+      if (t.team === 'Red') red.push(t);
+      else if (t.team === 'Blue') blue.push(t);
+      else none.push(t);
+    });
+
+    const ordered = [...red.sort(byName), ...blue.sort(byName), ...none.sort(byName)];
+
+    // spacer before first tech
+    const preSpacerRow = document.createElement('tr');
+    preSpacerRow.className = 'spacer-row';
+    const spacerNameCell = document.createElement('td');
+    spacerNameCell.className = 'employee-name';
+    preSpacerRow.appendChild(spacerNameCell);
+    dates.forEach(() => preSpacerRow.appendChild(document.createElement('td')));
+    body.appendChild(preSpacerRow);
+
+    ordered.forEach(({ id, name, team }) => {
+      const tr = document.createElement('tr');
+      const nameCell = document.createElement('td');
+      nameCell.className = 'employee-name';
+      if (team === 'Red') nameCell.classList.add('red-team');
+      else if (team === 'Blue') nameCell.classList.add('blue-team');
+      else nameCell.classList.add('no-team');
+      nameCell.textContent = name;
+      tr.appendChild(nameCell);
+
+      dates.forEach(date => {
+        const td = document.createElement('td');
+        td.className = 'day';
+        if (date.getDay() === 0 || date.getDay() === 6) td.classList.add('weekend');
+        td.dataset.date = date.toISOString().split('T')[0];
+        tr.appendChild(td);
+      });
+
+      body.appendChild(tr);
+
+      // spacer after each tech
+      const spacerRow = document.createElement('tr');
+      spacerRow.className = 'spacer-row';
+      const spacerNameCell2 = document.createElement('td');
+      spacerNameCell2.className = 'employee-name';
+      spacerRow.appendChild(spacerNameCell2);
+      dates.forEach(() => spacerRow.appendChild(document.createElement('td')));
+      body.appendChild(spacerRow);
+
+      techRowMap[name] = tr;
+    });
+
+    // Paint activities (read-only)
+    activities.forEach(({ tech, start_date, end_date, status, type, location, project_name, notes }) => {
+      const s = parseLocalDate(start_date);
+      const e = parseLocalDate(end_date);
+      if (!techRowMap[tech]) return;
+
+      const cells = techRowMap[tech].querySelectorAll('td.day');
+      dates.forEach((d, i) => {
+        if (d >= s && d <= e) {
+          const cell = cells[i];
+          cell.classList.remove('weekend');
+
+          const color =
+            // Training
+            ["Training"].includes(status) ? '#4EA72E' :
+            // Public Holiday, Other
+            ["Public Holiday", "Other"].includes(status) ? '#E49EDD' :
+            // Traveling
+            ["Traveling"].includes(status) ? '#FC9D9D' :
+            // Yellow group
+            ["Weekend Off (Sat–Sun)", "Sunday Off (Sun)", "Paid Time Off (PTO)",
+             "Flexible Time Off (FTO)", "Rotation Off-Duty (14x14)",
+             "Rotation Off-Duty (21x21)", "Weekend On-Call (Sat–Sun)"].includes(status) ? '#FFFF00' :
+            // Blue group
+            ["Weekday Shift (Mon–Fri)", "Regular Shift (Mon–Sat)",
+             "Rotation On-Duty (14x14)", "Rotation On-Duty (21x21)", "Standby"].includes(status) ? '#94DCF8' :
+            // Fallback
+            'gray';
+
+          cell.style.backgroundColor = color;
+          cell.textContent = project_name || '';
+          cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${project_name}\nNotes: ${notes}`;
+        }
+      });
+    });
+  }
+
+  // Scroll a bit left of ~today
+  window.onload = () => {
+    setTimeout(() => {
+      const twoWeeksAgo = new Date();
+      twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+      const iso = twoWeeksAgo.toISOString().split('T')[0];
+      const target = document.querySelector(`td[data-date="${iso}"]`);
+      if (target) {
+        document.querySelector('.calendar-container').scrollLeft = target.offsetLeft - 160;
+      }
+    }, 300);
+  };
+</script>
+
+</body>
+</html>
