@@ -25,12 +25,12 @@
       font-size: 16px;
       box-sizing: border-box;
     }
-input::placeholder,
-textarea::placeholder {
-  font-size: 16px;
-  font-family: Arial, sans-serif;  /* force same font */
-  color: #888;
-}
+    input::placeholder,
+    textarea::placeholder {
+      font-size: 16px;
+      font-family: Arial, sans-serif;
+      color: #888;
+    }
     button {
       background-color: #007bff;
       color: white;
@@ -44,6 +44,11 @@ textarea::placeholder {
     textarea {
       resize: vertical;
     }
+    small.help {
+      color: #666;
+      display: inline-block;
+      margin-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -52,10 +57,12 @@ textarea::placeholder {
 
 <form id="activityForm">
   <div>
-    <label for="tech">Tech Name</label><br>
-    <select id="tech" name="tech" required>
+    <label for="tech">Tech Name(s)</label><br>
+    <!-- Multi-select: hold Ctrl/Cmd to select multiple -->
+    <select id="tech" name="tech" required multiple size="8">
       <option value="">Select Name</option>
     </select>
+    <small class="help">Hold Ctrl (Windows) or Cmd (Mac) to select multiple names.</small>
   </div>
 
   <div>
@@ -68,28 +75,28 @@ textarea::placeholder {
     <input type="date" id="end" name="end" required>
   </div>
 
-<div>
-  <label for="status">Status</label><br>
-  <select id="status" name="status" required>
-    <option value="">Select Status</option>
-    <option>Weekday Shift (Mon–Fri)</option>
-    <option>Weekend Off (Sat–Sun)</option>
-    <option>Weekend On-Call (Sat–Sun)</option>
-    <option>Regular Shift (Mon–Sat)</option>
-    <option>Sunday Off (Sun)</option>
-    <option>Rotation On-Duty (14x14)</option>
-    <option>Rotation Off-Duty (14x14)</option>
-    <option>Rotation On-Duty (21x21)</option>
-    <option>Rotation Off-Duty (21x21)</option>
-    <option>Standby</option>
-    <option>Training</option>
-    <option>Traveling</option>
-    <option>Public Holiday</option>
-    <option>Paid Time Off (PTO)</option>
-    <option>Flexible Time Off (FTO)</option>
-    <option>Other</option>
-  </select>
-</div>
+  <div>
+    <label for="status">Status</label><br>
+    <select id="status" name="status" required>
+      <option value="">Select Status</option>
+      <option>Weekday Shift (Mon–Fri)</option>
+      <option>Weekend Off (Sat–Sun)</option>
+      <option>Weekend On-Call (Sat–Sun)</option>
+      <option>Regular Shift (Mon–Sat)</option>
+      <option>Sunday Off (Sun)</option>
+      <option>Rotation On-Duty (14x14)</option>
+      <option>Rotation Off-Duty (14x14)</option>
+      <option>Rotation On-Duty (21x21)</option>
+      <option>Rotation Off-Duty (21x21)</option>
+      <option>Standby</option>
+      <option>Training</option>
+      <option>Traveling</option>
+      <option>Public Holiday</option>
+      <option>Paid Time Off (PTO)</option>
+      <option>Flexible Time Off (FTO)</option>
+      <option>Other</option>
+    </select>
+  </div>
 
   <div>
     <label for="type">Type</label><br>
@@ -103,22 +110,22 @@ textarea::placeholder {
     </select>
   </div>
 
-<div>
-  <label for="location">Location</label><br>
-  <select id="location" name="location" required>
-    <option value="">Select Location</option>
-    <option>U.S. Offshore</option>
-    <option>U.S. Onshore</option>
-    <option>South Brooklyn Marine Terminal</option>
-    <option>Belgium</option>
-    <option>Denmark</option>
-    <option>Germany</option>
-    <option>Netherlands</option>
-    <option>Poland</option>
-    <option>United Kingdom</option>
-    <option>Other</option>
-  </select>
-</div>
+  <div>
+    <label for="location">Location</label><br>
+    <select id="location" name="location" required>
+      <option value="">Select Location</option>
+      <option>U.S. Offshore</option>
+      <option>U.S. Onshore</option>
+      <option>South Brooklyn Marine Terminal</option>
+      <option>Belgium</option>
+      <option>Denmark</option>
+      <option>Germany</option>
+      <option>Netherlands</option>
+      <option>Poland</option>
+      <option>United Kingdom</option>
+      <option>Other</option>
+    </select>
+  </div>
 
   <div>
     <label for="project_name">Project Name</label><br>
@@ -167,8 +174,18 @@ textarea::placeholder {
   document.getElementById('activityForm').addEventListener('submit', async function (event) {
     event.preventDefault();
 
-    const activity = {
-      tech: document.getElementById('tech').value,
+    // Gather selected techs (multi-select)
+    const techSelect = document.getElementById('tech');
+    const selectedTechs = Array.from(techSelect.selectedOptions)
+      .map(o => o.value)
+      .filter(Boolean);
+
+    if (selectedTechs.length === 0) {
+      alert('Please select at least one tech.');
+      return;
+    }
+
+    const common = {
       start_date: document.getElementById('start').value,
       end_date: document.getElementById('end').value,
       status: document.getElementById('status').value,
@@ -178,7 +195,10 @@ textarea::placeholder {
       notes: document.getElementById('notes').value
     };
 
-    const { error } = await client.from('activities').insert([activity]);
+    // Build one activity per selected tech
+    const activities = selectedTechs.map(tech => ({ tech, ...common }));
+
+    const { error } = await client.from('activities').insert(activities);
 
     if (error) {
       alert('Failed to save activity.');
@@ -191,7 +211,3 @@ textarea::placeholder {
 
 </body>
 </html>
-
-
-
-
