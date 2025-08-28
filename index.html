@@ -424,30 +424,34 @@ function renderTechs() {
         if (d >= s && d <= e) {
           const cell = cells[i];
           cell.classList.remove('weekend');
-const color =
-  // Orange group
-  ["Training", "Standby", "Traveling", "Other"].includes(status) ? 'orange' :
+        const color =
+          // Training
+          ["Training"].includes(status) ? '#4EA72E' :
 
-  // Blue group
-  ["Public Holiday"].includes(status) ? 'blue' :
+          // Public Holiday, Other
+          ["Public Holiday", "Other"].includes(status) ? '#E49EDD' :
 
-  // Red group (time off / rest)
-  ["Weekend Off (Sat–Sun)", "Sunday Off (Sun)", "Paid Time Off (PTO)", "Flexible Time Off (FTO)"].includes(status) ? 'red' :
+          // Traveling
+          ["Traveling"].includes(status) ? '#FC9D9D' :
 
-  // Green group (normal work / rotation)
-  ["Weekday Shift (Mon–Fri)", "Regular Shift (Mon–Sat)",
-   "Weekend On-Call (Sat–Sun)",
-   "Rotation On-Duty (14x14)", "Rotation Off-Duty (14x14)",
-   "Rotation On-Duty (21x21)", "Rotation Off-Duty (21x21)"].includes(status) ? '#4CAF50' :
+          // Yellow group (time off / on-call off-duty)
+          ["Weekend Off (Sat–Sun)", "Sunday Off (Sun)", "Paid Time Off (PTO)", 
+           "Flexible Time Off (FTO)", "Rotation Off-Duty (14x14)", 
+           "Rotation Off-Duty (21x21)", "Weekend On-Call (Sat–Sun)"].includes(status) ? '#FFFF00' :
 
-  // Fallback
-  'gray';
+          // Blue group (normal work / rotation / standby)
+          ["Weekday Shift (Mon–Fri)", "Regular Shift (Mon–Sat)",
+           "Rotation On-Duty (14x14)", "Rotation On-Duty (21x21)", 
+           "Standby"].includes(status) ? '#94DCF8' :
 
-cell.style.backgroundColor = color;
-cell.textContent = project_name || '';  // <<< add this
-cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${project_name}\nNotes: ${notes}`;
-cell.dataset.activityId = `${tech}|${start_date}|${end_date}`;
+          // Fallback
+          'gray';
 
+        // Apply color + project name
+        cell.style.backgroundColor = color;
+        cell.textContent = project_name || '';
+        cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${project_name}\nNotes: ${notes}`;
+        cell.dataset.activityId = `${tech}|${start_date}|${end_date}`;
         }
       });
     }
@@ -641,6 +645,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
