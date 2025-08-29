@@ -59,7 +59,7 @@
   <div>
     <label for="tech">Tech Name(s)</label><br>
     <!-- Multi-select: hold Ctrl/Cmd to select multiple -->
-    <select id="tech" name="tech" required multiple size="8">
+    <select id="tech" name="tech" required multiple size="12">
       <option value="">Select Name</option>
     </select>
     <small class="help">Hold Ctrl (Windows) or Cmd (Mac) to select multiple names.</small>
@@ -147,12 +147,12 @@
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
   );
 
+  // Load techs grouped: Red (A–Z), Blue (A–Z), Unassigned (A–Z)
   async function loadTechs() {
     const { data, error } = await client
       .from('techs')
-      .select('name')
-      .eq('active', true)
-      .order('name');
+      .select('name, team, active')
+      .eq('active', true);
 
     const techSelect = document.getElementById('tech');
     if (error) {
@@ -161,12 +161,46 @@
       return;
     }
 
-    data.forEach(tech => {
-      const option = document.createElement('option');
-      option.value = tech.name;
-      option.textContent = tech.name;
-      techSelect.appendChild(option);
+    // Group by team
+    const red = [];
+    const blue = [];
+    const none = [];
+
+    data.forEach(t => {
+      const team = (t.team || '').trim();
+      if (team.toLowerCase() === 'red') red.push(t);
+      else if (team.toLowerCase() === 'blue') blue.push(t);
+      else none.push(t);
     });
+
+    // Sort each group alphabetically by name
+    const byName = (a, b) => a.name.localeCompare(b.name);
+    red.sort(byName);
+    blue.sort(byName);
+    none.sort(byName);
+
+    // Helper to add a group to the select
+    function appendGroup(label, list) {
+      if (list.length === 0) return;
+      const og = document.createElement('optgroup');
+      og.label = label;
+      list.forEach(t => {
+        const option = document.createElement('option');
+        option.value = t.name;
+        option.textContent = t.name;
+        option.dataset.team = t.team || '';
+        og.appendChild(option);
+      });
+      techSelect.appendChild(og);
+    }
+
+    // Clear existing (keep the first "Select Name" option)
+    techSelect.length = 1;
+
+    // Append groups in desired order
+    appendGroup('Red Team', red);
+    appendGroup('Blue Team', blue);
+    appendGroup('Unassigned', none);
   }
 
   loadTechs();
