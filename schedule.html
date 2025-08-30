@@ -2,88 +2,23 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Empire Wind Team Schedule</title>
+  <title>Empire Wind Team Schedule — View Only</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      text-align: center;
-    }
-    .calendar-container {
-      overflow-x: auto;
-      border: 1px solid #ccc;
-      max-height: 90vh;
-      margin-bottom: 20px;
-      position: relative;
-    }
-    .calendar-grid {
-      border-collapse: collapse;
-      width: max-content;
-      min-width: 100%;
-      margin: 0 auto;
-    }
-    .calendar-grid th,
-    .calendar-grid td {
-      border: 1px solid #ddd;
-      padding: 1px;
-      text-align: center;
-      white-space: nowrap;
-      font-size: 10px;
-      background: #fff;
-    }
-    .employee-name {
-      position: sticky;
-      left: 0;
-      background: #fff;
-      z-index: 2;
-      font-weight: bold;
-      min-width: 160px;
-      max-width: 160px;
-      text-align: left;
-      padding-left: 5px;
-      font-size: 12px !important;
-      white-space: nowrap;
-    }
-    /* Set your day column width here */
-    .calendar-grid th.day,
-    .calendar-grid td.day {
-      width: 50px;
-      min-width: 50px;
-      max-width: 50px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; text-align: center; }
+    .calendar-container { overflow-x: auto; border: 1px solid #ccc; max-height: 90vh; margin-bottom: 20px; position: relative; }
+    .calendar-grid { border-collapse: collapse; width: max-content; min-width: 100%; margin: 0 auto; }
+    .calendar-grid th, .calendar-grid td { border: 1px solid #ddd; padding: 1px; text-align: center; white-space: nowrap; font-size: 10px; background: #fff; }
+    .employee-name { position: sticky; left: 0; background: #fff; z-index: 2; font-weight: bold; min-width: 160px; max-width: 160px; text-align: left; padding-left: 5px; font-size: 12px !important; white-space: nowrap; }
+    .calendar-grid th.day, .calendar-grid td.day { width: 50px; min-width: 50px; max-width: 50px; }
     .weekend { background-color: #f0f0f0 !important; }
     .month-blue { background-color: #e6f2ff !important; }
     .month-green { background-color: #e6ffe6 !important; }
-    .spacer-row td {
-      height: 5px;
-      background: #fff;
-      border: none;
-      padding: 0;
-      margin: 0;
-    }
-    .month-header {
-      font-size: 14px !important;
-      padding: 10px 0;
-      height: 20px;
-      vertical-align: middle;
-    }
-   .red-team {
-  background-color: #d9534f !important; /* softer red */
-  color: white !important;
-}
-
-.blue-team {
-  background-color: #337ab7 !important; /* softer blue */
-  color: white !important;
-}
-
-.no-team {
-  background-color: #444 !important;   /* dark gray instead of pure black */
-  color: white !important;
-}
-
+    .spacer-row td { height: 5px; background: #fff; border: none; padding: 0; margin: 0; }
+    .month-header { font-size: 14px !important; padding: 10px 0; height: 20px; vertical-align: middle; }
+    /* Team name cell colors */
+    .red-team  { background-color: #d9534f !important; color: white !important; }
+    .blue-team { background-color: #337ab7 !important; color: white !important; }
+    .no-team   { background-color: #444   !important; color: white !important; }
   </style>
 </head>
 <body>
@@ -97,7 +32,7 @@
   </table>
 </div>
 
-<!-- No action buttons, no modals, no context menu on this page -->
+<!-- No buttons, no context menu, no modals in the view-only page -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
@@ -107,13 +42,13 @@
   );
 
   function parseLocalDate(str) {
-    const [year, month, day] = str.split('-').map(Number);
-    return new Date(year, month - 1, day);
+    const [y,m,d] = str.split('-').map(Number);
+    return new Date(y, m - 1, d);
   }
 
   const startDate = parseLocalDate(localStorage.getItem('calendarStart') || '2025-04-01');
-  const rawEnd = localStorage.getItem('calendarEnd') || '2029-01-01';
-  const endDate = parseLocalDate(rawEnd);
+  const rawEnd    = localStorage.getItem('calendarEnd') || '2029-01-01';
+  const endDate   = parseLocalDate(rawEnd);
 
   const dates = [];
   let date = new Date(startDate);
@@ -122,16 +57,32 @@
     date.setDate(date.getDate() + 1);
   }
 
-  async function loadTechsFromSupabase() {
-    const { data, error } = await client.from('techs').select('*').eq('active', true).order('name');
-    if (error) { console.error('Error loading techs:', error); return []; }
+  async function loadTechsFromSupabase(includeInactive = false) {
+    const q = client.from('techs').select('*').order('name');
+    if (!includeInactive) q.eq('active', true);
+    const { data, error } = await q;
+    if (error) { console.error(error); return []; }
     return data;
   }
 
+  // Fetch ALL activities with pagination (view-only still needs the data)
   async function loadActivitiesFromSupabase() {
-    const { data, error } = await client.from('activities').select('*').order('start_date');
-    if (error) { console.error('Error loading activities:', error); return []; }
-    return data;
+    const pageSize = 1000;
+    let from = 0;
+    let all = [];
+    while (true) {
+      const { data, error } = await client
+        .from('activities')
+        .select('*')
+        .order('start_date', { ascending: true })
+        .range(from, from + pageSize - 1);
+      if (error) { console.error(error); return all; }
+      if (!data || data.length === 0) break;
+      all = all.concat(data);
+      if (data.length < pageSize) break;
+      from += pageSize;
+    }
+    return all;
   }
 
   const head = document.getElementById('calendar-head');
@@ -147,15 +98,15 @@
 
   const monthColors = ['month-blue', 'month-green'];
 
-  // Month header row
+  // Month headers
   const monthRow = document.createElement('tr');
   const emptyMonthTh = document.createElement('th');
   emptyMonthTh.className = 'employee-name';
   monthRow.appendChild(emptyMonthTh);
 
   let lastMonth = '', monthCell = null, monthSpan = 0, monthColorIndex = 0;
-  dates.forEach((date, i) => {
-    const label = `${date.toLocaleString('default', { month: 'long' })} - ${date.getFullYear()}`;
+  dates.forEach((d, i) => {
+    const label = `${d.toLocaleString('default', { month: 'long' })} - ${d.getFullYear()}`;
     if (label !== lastMonth) {
       if (monthCell) {
         monthCell.colSpan = monthSpan;
@@ -176,108 +127,99 @@
   });
   head.appendChild(monthRow);
 
-  // Day number + weekday initial rows
-  ['Name', ''].forEach((label, i) => {
+  // Day + weekday headers (e.g., 4-Nov and W)
+  ['Name', ''].forEach((_, i) => {
     const row = document.createElement('tr');
     const th = document.createElement('th');
     th.className = 'employee-name';
     th.textContent = i === 0 ? 'Name' : '';
     row.appendChild(th);
-    dates.forEach(date => {
-      const dth = document.createElement('th');
-      dth.className = 'day';
-      if (i === 0) dth.textContent = date.getDate();
-      else if (i === 1) dth.textContent = date.toLocaleDateString('en-US', { weekday: 'short' })[0];
-      if (date.getDay() === 0 || date.getDay() === 6) dth.classList.add('weekend');
-      row.appendChild(dth);
+
+    dates.forEach(d => {
+      const h = document.createElement('th');
+      h.className = 'day';
+      if (i === 0) h.textContent = d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      else        h.textContent = d.toLocaleDateString('en-US', { weekday: 'short' })[0];
+      if (d.getDay() === 0 || d.getDay() === 6) h.classList.add('weekend');
+      row.appendChild(h);
     });
+
     head.appendChild(row);
   });
 
-  function byName(a, b) { return a.name.localeCompare(b.name); }
+  // Spacer row
+  const spacerRow = document.createElement('tr');
+  spacerRow.className = 'spacer-row';
+  const spacerNameCell = document.createElement('td');
+  spacerNameCell.className = 'employee-name';
+  spacerRow.appendChild(spacerNameCell);
+  dates.forEach(() => spacerRow.appendChild(document.createElement('td')));
+  body.appendChild(spacerRow);
+
+  // Render tech rows + activities (view only)
+  function byName(a,b){ return a.name.localeCompare(b.name); }
+  const techRowMap = {};
 
   function render() {
-    const techRowMap = {};
-    const red = [], blue = [], none = [];
-    techs.forEach(t => {
-      if (t.team === 'Red') red.push(t);
-      else if (t.team === 'Blue') blue.push(t);
+    const red=[], blue=[], none=[];
+    techs.filter(t=>t.active).forEach(t=>{
+      if (t.team==='Red') red.push(t);
+      else if (t.team==='Blue') blue.push(t);
       else none.push(t);
     });
+    const ordered=[...red.sort(byName), ...blue.sort(byName), ...none.sort(byName)];
 
-    const ordered = [...red.sort(byName), ...blue.sort(byName), ...none.sort(byName)];
-
-    // spacer before first tech
-    const preSpacerRow = document.createElement('tr');
-    preSpacerRow.className = 'spacer-row';
-    const spacerNameCell = document.createElement('td');
-    spacerNameCell.className = 'employee-name';
-    preSpacerRow.appendChild(spacerNameCell);
-    dates.forEach(() => preSpacerRow.appendChild(document.createElement('td')));
-    body.appendChild(preSpacerRow);
-
-    ordered.forEach(({ id, name, team }) => {
-      const tr = document.createElement('tr');
-      const nameCell = document.createElement('td');
-      nameCell.className = 'employee-name';
-      if (team === 'Red') nameCell.classList.add('red-team');
-      else if (team === 'Blue') nameCell.classList.add('blue-team');
-      else nameCell.classList.add('no-team');
-      nameCell.textContent = name;
+    ordered.forEach(({id,name,team})=>{
+      const tr=document.createElement('tr');
+      const nameCell=document.createElement('td');
+      nameCell.className='employee-name';
+      nameCell.classList.add(team==='Red'?'red-team':team==='Blue'?'blue-team':'no-team');
+      nameCell.textContent=name;
+      nameCell.dataset.techName=name;
+      nameCell.dataset.techId=id;
       tr.appendChild(nameCell);
 
-      dates.forEach(date => {
-        const td = document.createElement('td');
-        td.className = 'day';
-        if (date.getDay() === 0 || date.getDay() === 6) td.classList.add('weekend');
-        td.dataset.date = date.toISOString().split('T')[0];
+      dates.forEach(d=>{
+        const td=document.createElement('td');
+        td.className='day';
+        if (d.getDay()===0||d.getDay()===6) td.classList.add('weekend');
+        td.dataset.date=d.toISOString().split('T')[0];
         tr.appendChild(td);
       });
 
       body.appendChild(tr);
 
       // spacer after each tech
-      const spacerRow = document.createElement('tr');
-      spacerRow.className = 'spacer-row';
-      const spacerNameCell2 = document.createElement('td');
-      spacerNameCell2.className = 'employee-name';
-      spacerRow.appendChild(spacerNameCell2);
-      dates.forEach(() => spacerRow.appendChild(document.createElement('td')));
-      body.appendChild(spacerRow);
+      const sr=document.createElement('tr');
+      sr.className='spacer-row';
+      const snc=document.createElement('td');
+      snc.className='employee-name';
+      sr.appendChild(snc);
+      dates.forEach(()=>sr.appendChild(document.createElement('td')));
+      body.appendChild(sr);
 
-      techRowMap[name] = tr;
+      techRowMap[name]=tr;
     });
 
-    // Paint activities (read-only)
-    activities.forEach(({ tech, start_date, end_date, status, type, location, project_name, notes }) => {
-      const s = parseLocalDate(start_date);
-      const e = parseLocalDate(end_date);
-      if (!techRowMap[tech]) return;
+    // paint activities
+    activities.forEach(({ tech, start_date, end_date, status, type, location, project_name, notes })=>{
+      const s=parseLocalDate(start_date), e=parseLocalDate(end_date);
+      const row=techRowMap[tech];
+      if (!row) return;
+      const cells=row.querySelectorAll('td.day');
 
-      const cells = techRowMap[tech].querySelectorAll('td.day');
-      dates.forEach((d, i) => {
-        if (d >= s && d <= e) {
-          const cell = cells[i];
+      dates.forEach((d,i)=>{
+        if (d>=s && d<=e) {
+          const cell=cells[i];
           cell.classList.remove('weekend');
-
           const color =
-            // Training
-            ["Training"].includes(status) ? '#4EA72E' :
-            // Public Holiday, Other
-            ["Public Holiday", "Other"].includes(status) ? '#E49EDD' :
-            // Traveling
-            ["Traveling"].includes(status) ? '#FC9D9D' :
-            // Yellow group
-            ["Weekend Off (Sat–Sun)", "Sunday Off (Sun)", "Paid Time Off (PTO)",
-             "Flexible Time Off (FTO)", "Rotation Off-Duty (14x14)",
-             "Rotation Off-Duty (21x21)", "Weekend On-Call (Sat–Sun)"].includes(status) ? '#FFFF00' :
-            // Blue group
-            ["Weekday Shift (Mon–Fri)", "Regular Shift (Mon–Sat)",
-             "Rotation On-Duty (14x14)", "Rotation On-Duty (21x21)", "Standby"].includes(status) ? '#94DCF8' :
-            // Fallback
-            'gray';
-
-          cell.style.backgroundColor = color;
+            ["Training"].includes(status) ? "#4EA72E" :
+            ["Public Holiday","Other"].includes(status) ? "#E49EDD" :
+            ["Traveling"].includes(status) ? "#FC9D9D" :
+            ["Weekend Off (Sat–Sun)","Sunday Off (Sun)","Paid Time Off (PTO)","Flexible Time Off (FTO)","Rotation Off-Duty (14x14)","Rotation Off-Duty (21x21)","Weekend On-Call (Sat–Sun)"].includes(status) ? "#FFFF00" :
+            ["Weekday Shift (Mon–Fri)","Regular Shift (Mon–Sat)","Rotation On-Duty (14x14)","Rotation On-Duty (21x21)","Standby"].includes(status) ? "#94DCF8" :
+            "gray";
+          cell.style.backgroundColor=color;
           cell.textContent = project_name || '';
           cell.title = `Status: ${status}\nType: ${type}\nLocation: ${location}\nProject: ${project_name}\nNotes: ${notes}`;
         }
@@ -285,7 +227,7 @@
     });
   }
 
-  // Scroll a bit left of ~today
+  // Scroll to ~two weeks ago on load (still useful in view-only)
   window.onload = () => {
     setTimeout(() => {
       const twoWeeksAgo = new Date();
