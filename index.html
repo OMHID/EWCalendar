@@ -353,16 +353,26 @@ head.appendChild(monthRow);
   th.className = 'employee-name';
   th.textContent = i === 0 ? 'Name' : '';
   row.appendChild(th);
+
   dates.forEach(date => {
     const th = document.createElement('th');
     th.className = 'day';
-    if (i === 0) th.textContent = date.getDate();
-    else if (i === 1) th.textContent = date.toLocaleDateString('en-US', { weekday: 'short' })[0];
+
+    if (i === 0) {
+      // Show "4-Nov" style
+      th.textContent = date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+    } else if (i === 1) {
+      // Keep weekday initial (S, M, T...)
+      th.textContent = date.toLocaleDateString('en-US', { weekday: 'short' })[0];
+    }
+
     if (date.getDay() === 0 || date.getDay() === 6) th.classList.add('weekend');
     row.appendChild(th);
   });
+
   head.appendChild(row);
 });
+
 
 // Add a spacer row before the first tech
 const preSpacerRow = document.createElement('tr');
@@ -664,6 +674,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
