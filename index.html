@@ -264,18 +264,32 @@ async function loadTechsFromSupabase(includeInactive = false) {
 }
 let activities = [];
 
+// Fetch ALL activities with pagination
 async function loadActivitiesFromSupabase() {
-  const { data, error } = await client
-    .from('activities')
-    .select('*')
-    .order('start_date');
+  const pageSize = 1000;
+  let from = 0;
+  let all = [];
 
-  if (error) {
-    console.error('Error loading activities from Supabase:', error);
-    return [];
+  while (true) {
+    const { data, error } = await client
+      .from('activities')
+      .select('*')
+      .order('start_date', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      console.error('Error loading activities from Supabase:', error);
+      return all;
+    }
+
+    if (!data || data.length === 0) break;
+
+    all = all.concat(data);
+    if (data.length < pageSize) break; // last page
+    from += pageSize;
   }
 
-  return data;
+  return all;
 }
 
 const head = document.getElementById('calendar-head');
@@ -650,6 +664,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
