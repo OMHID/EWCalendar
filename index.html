@@ -15,15 +15,51 @@
     .month-green { background-color: #e6ffe6 !important; }
     .spacer-row td { height: 5px; background: #fff; border: none; padding: 0; margin: 0; }
     .month-header { font-size: 14px !important; padding: 10px 0; height: 20px; vertical-align: middle; }
+
     /* Team name cell colors */
     .red-team  { background-color: #d9534f !important; color: white !important; }
     .blue-team { background-color: #337ab7 !important; color: white !important; }
     .no-team   { background-color: #444   !important; color: white !important; }
+
+    /* View-only range button */
+    .toolbar { margin: 10px 0 20px; }
+    .toolbar button {
+      padding: 8px 12px; font-size: 14px; border: none; border-radius: 6px;
+      background: #0d6efd; color: #fff; cursor: pointer;
+    }
+    .toolbar button:hover { background: #0b5ed7; }
+
+    /* Minimal modal just for date range */
+    #rangeModal {
+      display: none; position: fixed; z-index: 2000; inset: 0;
+      background: rgba(0,0,0,0.4);
+    }
+    #rangeModal .modal-content {
+      background: #fff; width: 320px; margin: 10% auto; padding: 16px;
+      border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.3); text-align: left;
+    }
+    #rangeModal label { font-weight: bold; display: block; margin-top: 8px; }
+    #rangeModal input[type="date"] { width: 100%; padding: 6px; margin-top: 4px; box-sizing: border-box; }
+    #rangeModal .footer { text-align: right; margin-top: 14px; }
+    #rangeModal .footer button {
+      padding: 6px 10px; margin-left: 8px; border: none; border-radius: 6px; cursor: pointer;
+    }
+    #rangeModal .footer .cancel { background: #6c757d; color:#fff; }
+    #rangeModal .footer .save { background: #198754; color:#fff; }
+    #rangeModal .footer .cancel:hover { background:#5c636a; }
+    #rangeModal .footer .save:hover { background:#157347; }
+    small.muted { color:#666; display:block; margin-top:6px; }
   </style>
 </head>
 <body>
 
 <h2>Empire Wind Team Schedule</h2>
+
+<!-- View-only toolbar: local calendar range -->
+<div class="toolbar">
+  <button id="openRange">Set calendar range</button>
+  <small class="muted">Updates only your device’s view (stores dates in your browser).</small>
+</div>
 
 <div class="calendar-container">
   <table class="calendar-grid" id="calendar">
@@ -32,7 +68,23 @@
   </table>
 </div>
 
-<!-- No buttons, no context menu, no modals in the view-only page -->
+<!-- Minimal date-range modal (view-only, localStorage only) -->
+<div id="rangeModal">
+  <div class="modal-content">
+    <h3 style="margin-top:0;">Set Calendar Range</h3>
+    <label for="rangeStart">Start Date</label>
+    <input type="date" id="rangeStart">
+    <label for="rangeEnd" style="margin-top:10px;">End Date</label>
+    <input type="date" id="rangeEnd">
+    <small class="muted">These dates are saved only in your browser (localStorage).</small>
+    <div class="footer">
+      <button class="cancel" id="cancelRange">Cancel</button>
+      <button class="save" id="saveRange">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- No other buttons, no context menu, no modals beyond range picker -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
@@ -46,6 +98,7 @@
     return new Date(y, m - 1, d);
   }
 
+  // Defaults used if a viewer hasn’t set their own range yet
   const startDate = parseLocalDate(localStorage.getItem('calendarStart') || '2025-05-15');
   const rawEnd    = localStorage.getItem('calendarEnd') || '2025-12-31';
   const endDate   = parseLocalDate(rawEnd);
@@ -65,7 +118,7 @@
     return data;
   }
 
-  // Fetch ALL activities with pagination (view-only still needs the data)
+  // Fetch ALL activities with pagination
   async function loadActivitiesFromSupabase() {
     const pageSize = 1000;
     let from = 0;
@@ -93,6 +146,7 @@
     techs = await loadTechsFromSupabase();
     activities = await loadActivitiesFromSupabase();
     render();
+    wireRangeModal();
   }
   init();
 
@@ -227,7 +281,37 @@
     });
   }
 
-  // Scroll to ~two weeks ago on load (still useful in view-only)
+  // Simple local-only date-range modal wiring
+  function wireRangeModal() {
+    const modal = document.getElementById('rangeModal');
+    const openBtn = document.getElementById('openRange');
+    const cancelBtn = document.getElementById('cancelRange');
+    const saveBtn = document.getElementById('saveRange');
+    const startInput = document.getElementById('rangeStart');
+    const endInput = document.getElementById('rangeEnd');
+
+    // Pre-fill from localStorage or current defaults
+    startInput.value = (localStorage.getItem('calendarStart') || '2025-05-15');
+    endInput.value   = (localStorage.getItem('calendarEnd')   || '2025-12-31');
+
+    openBtn.onclick = () => { modal.style.display = 'block'; };
+    cancelBtn.onclick = () => { modal.style.display = 'none'; };
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.style.display = 'none';
+    });
+
+    saveBtn.onclick = () => {
+      const s = startInput.value;
+      const e = endInput.value;
+      if (!s || !e) { alert('Please select both start and end dates.'); return; }
+      if (new Date(s) >= new Date(e)) { alert('Start date must be before end date.'); return; }
+      localStorage.setItem('calendarStart', s);
+      localStorage.setItem('calendarEnd', e);
+      location.reload();
+    };
+  }
+
+  // Scroll to ~two weeks ago on load
   window.onload = () => {
     setTimeout(() => {
       const twoWeeksAgo = new Date();
