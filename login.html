@@ -132,8 +132,9 @@ supabase.auth.getSession().then(({ data: { session } }) => {
       window.location.href = redirect;
     }
 
-   // 🧑‍💼 Manager login
-document.querySelector("#manager-login-btn").addEventListener("click", async () => {
+
+    // 🧑‍💼 Manager login
+document.querySelector("#manager-login").addEventListener("click", async () => {
   const email = document.querySelector("#manager-email").value.trim();
   const password = document.querySelector("#manager-password").value;
 
@@ -144,23 +145,29 @@ document.querySelector("#manager-login-btn").addEventListener("click", async () 
     return;
   }
 
-  // Step 2: Wait for Supabase to register the session
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  // Step 2: Wait for session to be available
+  let session = null;
+  for (let i = 0; i < 10; i++) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) {
+      session = data.session;
+      break;
+    }
+    await new Promise(r => setTimeout(r, 200)); // wait 200ms
+  }
+
   if (!session) {
-    alert("No active session found after login.");
-    console.error(sessionError);
+    alert("Session not established. Please try again.");
     return;
   }
 
-  console.log("✅ Logged in:", session.user.email);
+  console.log("✅ Logged in as:", session.user.email);
 
-  // Step 3: Now check whitelist (will use authenticated session)
+  // Step 3: Verify manager whitelist
   const { data: whitelist, error: wlError } = await supabase
     .from("manager_whitelist")
     .select("*")
     .eq("email", email);
-
-  console.log("Whitelist check result:", whitelist, wlError);
 
   if (wlError) {
     alert("Error checking whitelist: " + wlError.message);
@@ -168,12 +175,17 @@ document.querySelector("#manager-login-btn").addEventListener("click", async () 
   }
 
   if (whitelist && whitelist.length > 0) {
-    window.location.href = "admin-v236.html";
+    console.log("✅ Authorized as manager. Redirecting...");
+    // Give Supabase a moment to persist session before redirect
+    setTimeout(() => {
+      window.location.href = "admin-v236.html";
+    }, 500);
   } else {
     alert("Access denied: not authorized as manager.");
     await supabase.auth.signOut();
   }
 });
+
     
     // Technician login
     document.getElementById("tech-login").onclick = async () => {
