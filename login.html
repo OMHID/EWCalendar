@@ -143,7 +143,7 @@
       // Check Technician
       const { data: tech } = await supabase.from("technician_whitelist").select("*").eq("email", email);
       if (tech && tech.length > 0) {
-        window.location.href = "tech-dashboard.html";
+        window.location.href = "/";
         return;
       }
 
