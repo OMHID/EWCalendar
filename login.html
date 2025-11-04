@@ -113,6 +113,16 @@
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Check if the user session is being recognized as authenticated
+supabase.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    console.log("✅ Logged in as:", session.user.email);
+    console.log("Session access token:", session.access_token);
+  } else {
+    console.log("⚠️ No session found — not authenticated yet.");
+  }
+});
+    
     async function login(email, password, redirect) {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
