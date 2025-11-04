@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Empire Wind Team Schedule</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f5f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 {
+      margin-bottom: 30px;
+      color: #123a64;
+    }
+    .login-section {
+      background: white;
+      padding: 25px 35px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      width: 320px;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    button {
+      width: 95%;
+      background-color: #123a64;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #15508a;
+    }
+    hr {
+      border: 0;
+      height: 1px;
+      background: #c2c2c2;
+      width: 90%;
+      margin: 20px 0;
+    }
+    #reset-password {
+      background: none;
+      border: none;
+      color: #15508a;
+      font-size: 14px;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Empire Wind Team Schedule</h1>
+
+  <div class="login-section" id="manager-login-section">
+    <h2>Login as Manager</h2>
+    <input id="manager-email" type="email" placeholder="Manager Email" />
+    <input id="manager-password" type="password" placeholder="Password" />
+    <button id="manager-login">Login</button>
+  </div>
+
+  <hr />
+
+  <div class="login-section" id="tech-login-section">
+    <h2>Login as Technician</h2>
+    <input id="tech-email" type="email" placeholder="Technician Email" />
+    <input id="tech-password" type="password" placeholder="Password" />
+    <button id="tech-login">Login</button>
+    <button id="reset-password">Reset your password</button>
+  </div>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js";
+
+    // 🔧 Replace with your own Supabase project credentials
+    const SUPABASE_URL = "https://gxornxzzkmrkrenaszoq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA";
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // General login helper
+    async function login(email, password, redirect) {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert("Login failed: " + error.message);
+        return;
+      }
+      window.location.href = redirect;
+    }
+
+    // Manager login
+    document.getElementById("manager-login").onclick = async () => {
+      const email = document.getElementById("manager-email").value.trim();
+      const password = document.getElementById("manager-password").value.trim();
+
+      const { data, error } = await supabase
+        .from("manager_whitelist")
+        .select("email")
+        .eq("email", email)
+        .single();
+
+      if (error || !data) {
+        alert("Access denied: not authorized as manager.");
+        return;
+      }
+
+      await login(email, password, "/admin-v236.html");
+    };
+
+    // Technician login
+    document.getElementById("tech-login").onclick = async () => {
+      const email = document.getElementById("tech-email").value.trim();
+      const password = document.getElementById("tech-password").value.trim();
+      await login(email, password, "/");
+    };
+
+    // Reset password
+    document.getElementById("reset-password").onclick = async () => {
+      const email = prompt("Enter your email to reset password:");
+      if (!email) return;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "https://ew-calendar.vercel.app/login",
+      });
+      if (error) alert("Error: " + error.message);
+      else alert("A password reset link has been sent to your email.");
+    };
+  </script>
+</body>
+</html>
