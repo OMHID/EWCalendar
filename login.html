@@ -57,14 +57,15 @@
       margin: 20px 0;
     }
     #reset-password {
-      background: none;
-      border: none;
-      color: #15508a;
-      font-size: 14px;
-      text-decoration: underline;
-      cursor: pointer;
-      margin-top: 15px;
-    }
+  background: none;
+  border: none;
+  color: #15508a;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
   </style>
 </head>
 <body>
@@ -79,13 +80,14 @@
 
   <hr />
 
-  <div class="login-section" id="tech-login-section">
+    <div class="login-section" id="tech-login-section">
     <h2>Login as Technician</h2>
     <input id="tech-email" type="email" placeholder="Technician Email" />
     <input id="tech-password" type="password" placeholder="Password" />
     <button id="tech-login">Login</button>
-    <button id="reset-password">Reset your password</button>
   </div>
+
+  <button id="reset-password">Reset your password</button>
 
   <script type="module">
     import { createClient } from "https://esm.sh/@supabase/supabase-js";
