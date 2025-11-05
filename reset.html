@@ -4,34 +4,81 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Set or Reset Password</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f9fc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      width: 380px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 15px;
+      color: #0b3d91;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      background-color: #0b3d91;
+      color: white;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0a327a;
+    }
+    #message {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+  </style>
 </head>
+
 <body>
-  <div class="container" style="max-width:420px; margin:80px auto; text-align:center;">
+  <div class="container">
     <h2>Set Your Password</h2>
     <p>Enter your email, your temporary password, and your new password below.</p>
 
-    <input id="email" type="email" placeholder="Email address"
-           style="width:100%; padding:10px; margin-top:10px;" />
-    <input id="temp-password" type="password" placeholder="Temporary password (e.g., temp1234)"
-           style="width:100%; padding:10px; margin-top:10px;" />
-    <input id="new-password" type="password" placeholder="New password"
-           style="width:100%; padding:10px; margin-top:10px;" />
-    <button id="set-password"
-            style="width:100%; margin-top:15px; padding:10px; background:#0b3d91; color:#fff; border:none; border-radius:5px;">
-      Set Password
-    </button>
+    <input id="email" type="email" placeholder="Email address" />
+    <input id="temp-password" type="password" placeholder="Temporary password (e.g., temp1234)" />
+    <input id="new-password" type="password" placeholder="New password" />
+    <button id="set-password">Set Password</button>
 
-    <p id="message" style="margin-top:15px;"></p>
+    <p id="message"></p>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
+  <!-- ✅ Supabase script (ESM version, guaranteed to load properly) -->
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    // 🔑 Your Supabase credentials
     const SUPABASE_URL = "https://gxornxzzkmrkrenaszoq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const msgEl = document.getElementById("message");
 
+    // 🧭 Redirect based on whitelist
     async function redirectByWhitelist(email) {
       try {
         const [mgrRes, techRes] = await Promise.all([
@@ -55,6 +102,7 @@
       }
     }
 
+    // 🧩 Button click handler
     document.getElementById("set-password").onclick = async () => {
       const email = document.getElementById("email").value.trim();
       const tempPassword = document.getElementById("temp-password").value.trim();
@@ -68,4 +116,43 @@
 
       if (tempPassword === newPassword) {
         msgEl.textContent = "New password must be different from temporary password.";
-        msgEl.style.c
+        msgEl.style.color = "red";
+        return;
+      }
+
+      msgEl.textContent = "Signing in...";
+      msgEl.style.color = "gray";
+
+      // 1️⃣ Log in with temporary password
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password: tempPassword,
+      });
+
+      if (loginError) {
+        msgEl.textContent = "Login failed. Check your email or temporary password.";
+        msgEl.style.color = "red";
+        return;
+      }
+
+      msgEl.textContent = "Updating password...";
+      msgEl.style.color = "gray";
+
+      // 2️⃣ Update to new password
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        msgEl.textContent = "Error updating password: " + updateError.message;
+        msgEl.style.color = "red";
+        return;
+      }
+
+      msgEl.textContent = "Password updated successfully! Redirecting...";
+      msgEl.style.color = "green";
+
+      // 3️⃣ Redirect user based on whitelist
+      const { data: { user } } = await supabase.auth.getUser();
+      setTimeout(() => redirectByWhitelist(user.email), 1000);
+    };
+  </script>
+</body>
+</html>
