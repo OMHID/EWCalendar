@@ -63,8 +63,8 @@
         }
 
         // Not in either whitelist
-        msgEl.textContent = "Your account is not authorized for this site.";
-        msgEl.style.color = "red";
+        msgEl.textContent = "Please wait, redirecting you soon...";
+        msgEl.style.color = "gray";
         await supabase.auth.signOut();
         setTimeout(() => (window.location.href = "/login.html"), 2200);
       } catch (e) {
