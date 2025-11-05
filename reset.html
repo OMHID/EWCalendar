@@ -32,22 +32,33 @@
     const descEl  = document.getElementById("description");
     const msgEl   = document.getElementById("message");
 
-    // ✅ Try to restore Supabase session from URL hash (invite/reset links)
+    // ✅ Proper session restoration from invite/reset hash
     window.addEventListener("DOMContentLoaded", async () => {
       const hash = window.location.hash;
+
       if (hash && hash.includes("access_token")) {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(hash);
-        if (error) {
-          console.error("Session restoration failed:", error.message);
-          msgEl.textContent = "Please wait, redirecting you soon.";
-          msgEl.style.color = "gray";
-          setTimeout(() => (window.location.href = "/login.html"), 3000);
-          return;
+        const params = Object.fromEntries(new URLSearchParams(hash.substring(1)));
+        const { access_token, refresh_token } = params;
+
+        if (access_token && refresh_token) {
+          const { data, error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token
+          });
+
+          if (error) {
+            console.error("Session restoration failed:", error.message);
+            msgEl.textContent = "Please wait, redirecting you soon.";
+            msgEl.style.color = "gray";
+            setTimeout(() => (window.location.href = "/login.html"), 3000);
+            return;
+          }
+
+          console.log("Session restored:", data.session);
         }
-        console.log("Session restored:", data.session);
       }
 
-      // Check if user is authenticated already
+      // ✅ Check if user is authenticated already
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         titleEl.textContent = "Set Your Password";
