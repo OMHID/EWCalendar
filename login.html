@@ -158,7 +158,7 @@ document.getElementById("reset-password-link").onclick = async (e) => {
   if (!email) return;
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: "https://ew-calendar.vercel.app/reset.html"
+    redirectTo: "https://ew-calendar.vercel.app/update-password.html"
   });
 
   if (error) {
