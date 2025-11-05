@@ -3,19 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reset or Set Your Password</title>
+  <title>Set or Reset Password</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container" style="max-width: 420px; margin: 80px auto; text-align: center;">
-    <h2 id="title">Reset Your Password</h2>
-    <p id="description">Enter your new password below.</p>
+  <div class="container" style="max-width:420px; margin:80px auto; text-align:center;">
+    <h2>Set Your Password</h2>
+    <p>Enter your email and a new password below.</p>
 
-    <input id="new-password" type="password" placeholder="New password"
+    <input id="email" type="email" placeholder="Email address"
            style="width:100%; padding:10px; margin-top:10px;" />
-    <button id="update-password"
+    <input id="password" type="password" placeholder="New password"
+           style="width:100%; padding:10px; margin-top:10px;" />
+    <button id="set-password"
             style="width:100%; margin-top:15px; padding:10px; background:#0b3d91; color:#fff; border:none; border-radius:5px;">
-      Update Password
+      Set Password
     </button>
 
     <p id="message" style="margin-top:15px;"></p>
@@ -23,50 +25,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
-    // Supabase project config
     const SUPABASE_URL = "https://gxornxzzkmrkrenaszoq.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA";
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const titleEl = document.getElementById("title");
-    const descEl  = document.getElementById("description");
-    const msgEl   = document.getElementById("message");
+    const msgEl = document.getElementById("message");
 
-    // ✅ Proper session restoration from invite/reset hash
-    window.addEventListener("DOMContentLoaded", async () => {
-      const hash = window.location.hash;
-
-      if (hash && hash.includes("access_token")) {
-        const params = Object.fromEntries(new URLSearchParams(hash.substring(1)));
-        const { access_token, refresh_token } = params;
-
-        if (access_token && refresh_token) {
-          const { data, error } = await supabase.auth.setSession({
-            access_token,
-            refresh_token
-          });
-
-          if (error) {
-            console.error("Session restoration failed:", error.message);
-            msgEl.textContent = "Please wait, redirecting you soon.";
-            msgEl.style.color = "gray";
-            setTimeout(() => (window.location.href = "/login.html"), 3000);
-            return;
-          }
-
-          console.log("Session restored:", data.session);
-        }
-      }
-
-      // ✅ Check if user is authenticated already
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        titleEl.textContent = "Set Your Password";
-        descEl.textContent  = "Welcome! Please set your password to finish setting up your account.";
-      }
-    });
-
-    // ✅ Whitelist-driven redirect
+    // Redirect helper
     async function redirectByWhitelist(email) {
       try {
         const [mgrRes, techRes] = await Promise.all([
@@ -74,56 +39,68 @@
           supabase.from("technician_whitelist").select("id").eq("email", email),
         ]);
 
-        const isManager = Array.isArray(mgrRes.data)  && mgrRes.data.length  > 0;
-        const isTech    = Array.isArray(techRes.data) && techRes.data.length > 0;
+        const isManager = mgrRes.data?.length > 0;
+        const isTech = techRes.data?.length > 0;
 
-        if (isManager) {
-          window.location.href = "/admin-v236.html";
-          return;
+        if (isManager) window.location.href = "/admin-v236.html";
+        else if (isTech) window.location.href = "/";
+        else {
+          msgEl.textContent = "Your account is not whitelisted. Contact support.";
+          msgEl.style.color = "red";
+          await supabase.auth.signOut();
         }
-        if (isTech) {
-          window.location.href = "/";
-          return;
-        }
-
-        // Not in either whitelist
-        msgEl.textContent = "Please wait, redirecting you soon...";
-        msgEl.style.color = "gray";
-        await supabase.auth.signOut();
-        setTimeout(() => (window.location.href = "/login.html"), 2200);
       } catch (e) {
-        msgEl.textContent = "Unexpected error determining access. Please try again.";
+        msgEl.textContent = "Error determining access. Please try again.";
         msgEl.style.color = "red";
-        setTimeout(() => (window.location.href = "/login.html"), 2200);
       }
     }
 
-    // ✅ Handle password update
-    document.getElementById("update-password").onclick = async () => {
-      const newPassword = document.getElementById("new-password").value.trim();
+    document.getElementById("set-password").onclick = async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
 
-      if (!newPassword) {
-        msgEl.textContent = "Please enter a new password.";
+      if (!email || !password) {
+        msgEl.textContent = "Please fill in both fields.";
         msgEl.style.color = "red";
         return;
       }
 
-      // Attempt password update
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      // Sign in with existing credentials first
+      msgEl.textContent = "Verifying account...";
+      msgEl.style.color = "gray";
 
-      if (error) {
-        msgEl.textContent = "Error updating password: " + error.message;
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (signInError) {
+        // If login fails, try to force password update for existing account
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpError) {
+          msgEl.textContent = "Account not found or password invalid.";
+          msgEl.style.color = "red";
+          return;
+        }
+      }
+
+      // If login succeeds, update password
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) {
+        msgEl.textContent = "Error updating password: " + updateError.message;
         msgEl.style.color = "red";
         return;
       }
 
-      // Success — now route accordingly
       const { data: { user } } = await supabase.auth.getUser();
-      msgEl.textContent = "Password updated successfully! Redirecting…";
+      msgEl.textContent = "Password set successfully! Redirecting...";
       msgEl.style.color = "green";
 
-      const email = user?.email || "";
-      setTimeout(() => redirectByWhitelist(email), 1200);
+      setTimeout(() => redirectByWhitelist(user.email), 1000);
     };
   </script>
 </body>
