@@ -236,6 +236,36 @@
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
   );
 
+
+// ✅ AUTH GUARD — Only allow logged-in & whitelisted managers
+(async () => {
+  const { data: { session } } = await client.auth.getSession();
+
+  if (!session || !session.user) {
+    window.location.href = "/login.html";
+    return;
+  }
+
+  const email = session.user.email;
+
+  // Check if email is in manager whitelist table
+  const { data, error } = await client
+    .from("manager_whitelist")
+    .select("email")
+    .eq("email", email);
+
+  if (error || !data || data.length === 0) {
+    alert("Access denied. Manager account not found.");
+    await client.auth.signOut();
+    window.location.href = "/login.html";
+    return;
+  }
+
+  // ✅ If valid, continue to load dashboard
+  init();
+})();
+
+  
 function parseLocalDate(str) {
   const [year, month, day] = str.split('-').map(Number);
   return new Date(year, month - 1, day); // month is 0-indexed
@@ -313,7 +343,6 @@ async function init() {
   renderTechs();
 }
 
-init();
 
 const monthColors = ['month-blue', 'month-green'];
 
@@ -674,6 +703,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
