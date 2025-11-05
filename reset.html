@@ -32,9 +32,22 @@
     const descEl  = document.getElementById("description");
     const msgEl   = document.getElementById("message");
 
-    // If the user arrived via an invitation link, they are already authenticated.
-    // Tweak copy to make it clear they're completing setup.
+    // ✅ Try to restore Supabase session from URL hash (invite/reset links)
     window.addEventListener("DOMContentLoaded", async () => {
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token")) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(hash);
+        if (error) {
+          console.error("Session restoration failed:", error.message);
+          msgEl.textContent = "Please wait, redirecting you soon.";
+          msgEl.style.color = "gray";
+          setTimeout(() => (window.location.href = "/login.html"), 3000);
+          return;
+        }
+        console.log("Session restored:", data.session);
+      }
+
+      // Check if user is authenticated already
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         titleEl.textContent = "Set Your Password";
@@ -42,7 +55,7 @@
       }
     });
 
-    // Whitelist-driven redirect
+    // ✅ Whitelist-driven redirect
     async function redirectByWhitelist(email) {
       try {
         const [mgrRes, techRes] = await Promise.all([
@@ -74,7 +87,7 @@
       }
     }
 
-    // Handle password update (works for both invite and reset flows)
+    // ✅ Handle password update
     document.getElementById("update-password").onclick = async () => {
       const newPassword = document.getElementById("new-password").value.trim();
 
@@ -84,6 +97,7 @@
         return;
       }
 
+      // Attempt password update
       const { error } = await supabase.auth.updateUser({ password: newPassword });
 
       if (error) {
@@ -92,7 +106,7 @@
         return;
       }
 
-      // Get the logged-in user and route by whitelist
+      // Success — now route accordingly
       const { data: { user } } = await supabase.auth.getUser();
       msgEl.textContent = "Password updated successfully! Redirecting…";
       msgEl.style.color = "green";
