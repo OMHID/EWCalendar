@@ -79,28 +79,34 @@
     const msgEl = document.getElementById("message");
 
     // 🧭 Redirect based on whitelist
-    async function redirectByWhitelist(email) {
-      try {
-        const [mgrRes, techRes] = await Promise.all([
-          supabase.from("manager_whitelist").select("id").eq("email", email),
-          supabase.from("technician_whitelist").select("id").eq("email", email),
-        ]);
+   async function redirectByWhitelist(email) {
+  try {
+    const emailLower = email.toLowerCase();
 
-        const isManager = mgrRes.data?.length > 0;
-        const isTech = techRes.data?.length > 0;
+    const [mgrRes, techRes] = await Promise.all([
+      supabase.from("manager_whitelist").select("id").ilike("email", emailLower),
+      supabase.from("technician_whitelist").select("id").ilike("email", emailLower),
+    ]);
 
-        if (isManager) window.location.href = "/admin-v236.html";
-        else if (isTech) window.location.href = "/";
-        else {
-          msgEl.textContent = "Your account is not whitelisted. Contact support.";
-          msgEl.style.color = "red";
-          await supabase.auth.signOut();
-        }
-      } catch (e) {
-        msgEl.textContent = "Error determining access. Please try again.";
-        msgEl.style.color = "red";
-      }
+    console.log("Manager data:", mgrRes);
+    console.log("Technician data:", techRes);
+
+    const isManager = mgrRes.data?.length > 0;
+    const isTech = techRes.data?.length > 0;
+
+    if (isManager) window.location.href = "/admin-v236.html";
+    else if (isTech) window.location.href = "/";
+    else {
+      msgEl.textContent = "Your account is not whitelisted. Contact support.";
+      msgEl.style.color = "red";
+      await supabase.auth.signOut();
     }
+  } catch (e) {
+    msgEl.textContent = "Error determining access. Please try again.";
+    msgEl.style.color = "red";
+    console.error(e);
+  }
+}
 
     // 🧩 Button click handler
     document.getElementById("set-password").onclick = async () => {
