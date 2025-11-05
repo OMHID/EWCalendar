@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container" style="max-width: 400px; margin: 80px auto; text-align: center;">
+    <h2>Reset Your Password</h2>
+    <p>Enter your new password below.</p>
+
+    <input id="new-password" type="password" placeholder="New password" style="width:100%; padding:10px; margin-top:10px;">
+    <button id="update-password" style="width:100%; margin-top:15px; padding:10px; background:#0b3d91; color:#fff; border:none; border-radius:5px;">
+      Update Password
+    </button>
+
+    <p id="message" style="margin-top:15px;"></p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = "https://gxornxzzkmrkrenaszoq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.getElementById("update-password").onclick = async () => {
+      const newPassword = document.getElementById("new-password").value.trim();
+      const message = document.getElementById("message");
+
+      if (!newPassword) {
+        message.textContent = "Please enter a new password.";
+        message.style.color = "red";
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) {
+        message.textContent = "Error updating password: " + error.message;
+        message.style.color = "red";
+      } else {
+        message.textContent = "Password updated successfully! You can now log in.";
+        message.style.color = "green";
+        setTimeout(() => window.location.href = "/login.html", 2000);
+      }
+    };
+  </script>
+</body>
+</html>
