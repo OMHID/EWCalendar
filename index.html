@@ -86,6 +86,8 @@
 
 <!-- No other buttons, no context menu, no modals beyond range picker -->
 
+
+  
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
   const client = supabase.createClient(
@@ -93,6 +95,35 @@
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4b3JueHp6a21ya3JlbmFzem9xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYxMjM2NjIsImV4cCI6MjA2MTY5OTY2Mn0.-fc15M3MznSnEGW9CnD2gZZe7L0Vsd9vag_W-0lCPeA'
   );
 
+  // ✅ AUTH GUARD — only allow logged-in users
+  (async () => {
+    const { data: { session } } = await client.auth.getSession();
+    if (!session) {
+      // no session -> send to login
+      window.location.href = "/login.html";
+      return;
+    }
+
+    // optionally, verify they’re in the technician whitelist
+    const email = session.user.email;
+    const { data: techRes, error } = await client
+      .from("technician_whitelist")
+      .select("email")
+      .eq("email", email);
+
+    if (error || !techRes || techRes.length === 0) {
+      alert("Access denied. Technician account not found.");
+      await client.auth.signOut();
+      window.location.href = "/login.html";
+      return;
+    }
+
+    // ✅ proceed to load the page only if authenticated and whitelisted
+    init();
+  })();
+
+
+  
   function parseLocalDate(str) {
     const [y,m,d] = str.split('-').map(Number);
     return new Date(y, m - 1, d);
@@ -148,7 +179,8 @@
     render();
     wireRangeModal();
   }
-  init();
+
+  
 
   const monthColors = ['month-blue', 'month-green'];
 
