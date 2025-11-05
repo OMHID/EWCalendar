@@ -150,6 +150,23 @@
       alert("Access denied: not authorized.");
       await supabase.auth.signOut();
     });
-  </script>
+
+
+document.getElementById("reset-password-link").onclick = async (e) => {
+  e.preventDefault();
+  const email = prompt("Please enter your email address to reset your password:");
+  if (!email) return;
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: "https://ew-calendar.vercel.app/reset.html"
+  });
+
+  if (error) {
+    alert("Error sending reset link: " + error.message);
+  } else {
+    alert("Check your email for a password reset link.");
+  }
+};
+</script>
 </body>
 </html>
