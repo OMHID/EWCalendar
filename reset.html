@@ -9,11 +9,13 @@
 <body>
   <div class="container" style="max-width:420px; margin:80px auto; text-align:center;">
     <h2>Set Your Password</h2>
-    <p>Enter your email and a temporary password below: temp1234</p>
+    <p>Enter your email, your temporary password, and your new password below.</p>
 
     <input id="email" type="email" placeholder="Email address"
            style="width:100%; padding:10px; margin-top:10px;" />
-    <input id="password" type="password" placeholder="New password"
+    <input id="temp-password" type="password" placeholder="Temporary password (e.g., temp1234)"
+           style="width:100%; padding:10px; margin-top:10px;" />
+    <input id="new-password" type="password" placeholder="New password"
            style="width:100%; padding:10px; margin-top:10px;" />
     <button id="set-password"
             style="width:100%; margin-top:15px; padding:10px; background:#0b3d91; color:#fff; border:none; border-radius:5px;">
@@ -55,46 +57,15 @@
 
     document.getElementById("set-password").onclick = async () => {
       const email = document.getElementById("email").value.trim();
-      const newPassword = document.getElementById("password").value.trim();
+      const tempPassword = document.getElementById("temp-password").value.trim();
+      const newPassword = document.getElementById("new-password").value.trim();
 
-      if (!email || !newPassword) {
-        msgEl.textContent = "Please fill in both fields.";
+      if (!email || !tempPassword || !newPassword) {
+        msgEl.textContent = "Please fill in all fields.";
         msgEl.style.color = "red";
         return;
       }
 
-      msgEl.textContent = "Signing in...";
-      msgEl.style.color = "gray";
-
-      // First try to sign in with the TEMP password (same as admin set)
-      const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-        email,
-        password: newPassword, // try their new password in case admin gave same one
-      });
-
-      if (loginError) {
-        msgEl.textContent = "Login failed with that password. Please enter the TEMP password first.";
-        msgEl.style.color = "red";
-        return;
-      }
-
-      msgEl.textContent = "Updating password...";
-      msgEl.style.color = "gray";
-
-      // Now update to the new password (they typed)
-      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-      if (updateError) {
-        msgEl.textContent = "Error updating password: " + updateError.message;
-        msgEl.style.color = "red";
-        return;
-      }
-
-      msgEl.textContent = "Password updated successfully! Redirecting...";
-      msgEl.style.color = "green";
-
-      const { data: { user } } = await supabase.auth.getUser();
-      setTimeout(() => redirectByWhitelist(user.email), 1000);
-    };
-  </script>
-</body>
-</html>
+      if (tempPassword === newPassword) {
+        msgEl.textContent = "New password must be different from temporary password.";
+        msgEl.style.c
