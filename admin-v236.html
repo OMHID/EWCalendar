@@ -526,9 +526,12 @@ function renderTechs() {
 
 // ✅ NEW FUNCTION: Highlight today's date in the header
 function highlightToday() {
-  // Get today's date from user's local computer
+  // Get today's date from user's local computer (in local timezone, not UTC)
   const today = new Date();
-  const todayISO = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayISO = `${year}-${month}-${day}`; // Format: YYYY-MM-DD in local timezone
 
   // Find all header cells with today's date
   const headerRows = document.querySelectorAll('#calendar-head tr');
