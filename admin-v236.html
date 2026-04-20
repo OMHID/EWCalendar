@@ -144,6 +144,12 @@
   color: white !important;
 }
 
+    .today-highlight {
+  background-color: #ff0000 !important; /* red for today's date */
+  color: white !important;
+  font-weight: bold !important;
+}
+
   </style>
 </head>
 <body>
@@ -341,6 +347,7 @@ async function init() {
   techs = await loadTechsFromSupabase();
   activities = await retryLoadActivities();
   renderTechs();
+  highlightToday(); // ✅ NEW: Highlight today's date
 }
 
 
@@ -386,6 +393,7 @@ head.appendChild(monthRow);
   dates.forEach(date => {
     const th = document.createElement('th');
     th.className = 'day';
+    th.dataset.dateValue = date.toISOString().split('T')[0]; // ✅ NEW: Store date for highlighting
 
     if (i === 0) {
       // Show "4-Nov" style
@@ -516,6 +524,25 @@ function renderTechs() {
   });
 }
 
+// ✅ NEW FUNCTION: Highlight today's date in the header
+function highlightToday() {
+  // Get today's date from user's local computer
+  const today = new Date();
+  const todayISO = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+
+  // Find all header cells with today's date
+  const headerRows = document.querySelectorAll('#calendar-head tr');
+  
+  headerRows.forEach((row) => {
+    const cells = row.querySelectorAll('th.day[data-date-value]');
+    cells.forEach((cell) => {
+      if (cell.dataset.dateValue === todayISO) {
+        cell.classList.add('today-highlight');
+      }
+    });
+  });
+}
+
 // Context menu
 let clickedCell = null, clickedTech = null;
 const contextMenu = document.getElementById('context-menu');
@@ -634,7 +661,7 @@ function saveManageModal() {
   const techList = document.getElementById('techList').children;
 
   (async () => {
-    // Update existing techs’ active status
+    // Update existing techs' active status
     for (const div of techList) {
       const id = div.dataset.id;
       const name = div.dataset.name;
@@ -703,17 +730,3 @@ window.onload = () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
